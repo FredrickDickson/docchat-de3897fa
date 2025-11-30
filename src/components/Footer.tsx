@@ -1,4 +1,4 @@
-import { FileText } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 
 const Footer = () => {
   return (
@@ -7,9 +7,9 @@ const Footer = () => {
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg accent-gradient flex items-center justify-center">
-              <FileText className="w-4 h-4 text-primary-foreground" />
+              <MessageSquare className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="font-serif text-lg font-semibold">SummarizeIt</span>
+            <span className="font-serif text-lg font-semibold">DocChat</span>
           </div>
 
           <nav className="flex items-center gap-6 text-sm">
@@ -25,7 +25,7 @@ const Footer = () => {
           </nav>
 
           <p className="text-sm text-background/50">
-            © 2024 SummarizeIt. All rights reserved.
+            © 2024 DocChat. All rights reserved.
           </p>
         </div>
       </div>

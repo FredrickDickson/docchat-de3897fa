@@ -1,25 +1,25 @@
-import { FileText, Zap, Download, Shield, Globe, Sparkles } from "lucide-react";
+import { FileText, MessageSquare, Download, Shield, Globe, Sparkles } from "lucide-react";
 
 const features = [
   {
-    icon: Zap,
-    title: "Lightning fast",
-    description: "Get your summary in under 30 seconds, regardless of document length",
+    icon: MessageSquare,
+    title: "Natural conversations",
+    description: "Ask questions in plain English and get intelligent, context-aware answers instantly",
   },
   {
     icon: FileText,
-    title: "100+ page support",
-    description: "Handle massive PDFs up to 100MB with ease, including scanned documents",
+    title: "Any document format",
+    description: "PDFs, PowerPoints, Word docs—upload any document up to 100MB with ease",
   },
   {
     icon: Sparkles,
-    title: "Context-aware AI",
-    description: "Specialized for legal, finance, and academic documents with domain accuracy",
+    title: "Smart analysis",
+    description: "AI understands context, extracts key insights, and identifies important information",
   },
   {
     icon: Download,
-    title: "Multiple exports",
-    description: "Download as TXT, CSV, JSON or push directly to Slack and Notion",
+    title: "Export anywhere",
+    description: "Download summaries as TXT, or share insights directly to Slack and Notion",
   },
   {
     icon: Shield,
@@ -29,7 +29,7 @@ const features = [
   {
     icon: Globe,
     title: "40+ languages",
-    description: "Summarize documents in any language and get results in your preferred one",
+    description: "Chat about documents in any language and get responses in your preferred one",
   },
 ];
 
@@ -39,10 +39,10 @@ const Features = () => {
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-serif mb-4">
-            Built for professionals
+            Document intelligence, reimagined
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Every feature designed to save you time and deliver accurate insights
+            Stop skimming. Start understanding. Every feature designed to help you extract value from documents faster.
           </p>
         </div>
 

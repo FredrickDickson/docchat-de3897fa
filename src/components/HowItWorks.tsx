@@ -1,23 +1,23 @@
-import { Upload, Cpu, FileCheck } from "lucide-react";
+import { Upload, Sparkles, MessageSquare } from "lucide-react";
 
 const steps = [
   {
     icon: Upload,
     step: "01",
-    title: "Upload your PDF",
-    description: "Drag and drop any PDF up to 100MB. We support scanned documents with OCR.",
+    title: "Upload your document",
+    description: "Drag and drop any PDF, PowerPoint, or Word document. We handle files up to 100MB.",
   },
   {
-    icon: Cpu,
+    icon: Sparkles,
     step: "02",
-    title: "AI processes it",
-    description: "Our AI reads and understands the full context, extracting key insights.",
+    title: "AI analyzes it",
+    description: "Our AI reads and understands the full context, structure, and key information.",
   },
   {
-    icon: FileCheck,
+    icon: MessageSquare,
     step: "03",
-    title: "Get your summary",
-    description: "Receive a concise summary in seconds. Export or share as needed.",
+    title: "Start chatting",
+    description: "Ask questions, request summaries, or explore specific sections naturally.",
   },
 ];
 
@@ -30,7 +30,7 @@ const HowItWorks = () => {
             How it works
           </h2>
           <p className="text-muted-foreground">
-            Three simple steps to transform any document
+            From upload to insight in under 30 seconds
           </p>
         </div>
 

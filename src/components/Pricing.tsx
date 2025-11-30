@@ -8,10 +8,10 @@ const plans = [
     period: "forever",
     description: "Perfect for trying it out",
     features: [
-      "3 summaries per day",
-      "Up to 50 pages per PDF",
+      "5 document chats per day",
+      "Up to 50 pages per document",
       "Basic export (TXT)",
-      "Standard processing speed",
+      "Standard response speed",
     ],
     cta: "Start free",
     variant: "outline" as const,
@@ -20,13 +20,13 @@ const plans = [
     name: "Pro",
     price: "$19",
     period: "per month",
-    description: "For professionals who need more",
+    description: "For power users",
     features: [
-      "Unlimited summaries",
-      "Up to 200 pages per PDF",
+      "Unlimited document chats",
+      "Up to 200 pages per document",
       "All export formats",
       "Priority processing",
-      "Domain-specific accuracy",
+      "Chat history saved",
       "Slack & Notion integration",
     ],
     cta: "Get Pro",
@@ -35,12 +35,12 @@ const plans = [
   },
   {
     name: "Credits",
-    price: "$0.50",
-    period: "per summary",
+    price: "$0.25",
+    period: "per chat",
     description: "Pay as you go",
     features: [
       "No monthly commitment",
-      "Up to 100 pages per PDF",
+      "Up to 100 pages per document",
       "All export formats",
       "Priority processing",
       "Credits never expire",
@@ -59,7 +59,7 @@ const Pricing = () => {
             Simple, transparent pricing
           </h2>
           <p className="text-muted-foreground max-w-xl mx-auto">
-            Save 5+ hours per week. That's $500+ in billable time for consultants.
+            Save hours every week. One quick answer can save an hour of reading.
           </p>
         </div>
 
