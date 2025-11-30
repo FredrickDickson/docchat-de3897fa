@@ -1,11 +1,24 @@
-import { ArrowRight, Sparkles, FileText, MessageSquare, Zap } from "lucide-react";
+import { ArrowRight, Sparkles, FileText, MessageSquare, Zap, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 interface HeroProps {
   onGetStarted: () => void;
 }
 
 const Hero = ({ onGetStarted }: HeroProps) => {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  const handleGetStarted = () => {
+    if (user) {
+      navigate("/dashboard");
+    } else {
+      onGetStarted();
+    }
+  };
+
   return (
     <section className="pt-32 pb-20 hero-gradient relative overflow-hidden">
       {/* Decorative elements */}
@@ -31,18 +44,31 @@ const Hero = ({ onGetStarted }: HeroProps) => {
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-up" style={{ animationDelay: "0.3s" }}>
-            <Button variant="hero" size="xl" onClick={onGetStarted}>
-              Start chatting free
-              <ArrowRight className="w-5 h-5" />
+            <Button variant="hero" size="xl" onClick={handleGetStarted}>
+              {user ? (
+                <>
+                  <Upload className="w-5 h-5" />
+                  Upload Document
+                </>
+              ) : (
+                <>
+                  Start chatting free
+                  <ArrowRight className="w-5 h-5" />
+                </>
+              )}
             </Button>
-            <Button variant="soft" size="xl">
-              Watch demo
-            </Button>
+            {!user && (
+              <Button variant="soft" size="xl">
+                Watch demo
+              </Button>
+            )}
           </div>
           
-          <p className="text-sm text-muted-foreground mt-6 animate-fade-up" style={{ animationDelay: "0.4s" }}>
-            5 free chats daily • No credit card required
-          </p>
+          {!loading && !user && (
+            <p className="text-sm text-muted-foreground mt-6 animate-fade-up" style={{ animationDelay: "0.4s" }}>
+              5 free chats daily • No credit card required
+            </p>
+          )}
         </div>
         
         {/* Feature pills */}
