@@ -49,6 +49,20 @@ It combines:
    - Adds RLS so users can only access their own chat sessions and messages.
    - Adds a trigger so `chat_sessions.updated_at` is refreshed whenever a new message is inserted.
 
+5. **`05_pdf_summarizer_tables.sql`** (Phase 1 - PDF Summarizer)
+   - Updates `users` table with PDF Summarizer fields:
+     - `plan_status` (free/pro)
+     - `daily_summary_count` (usage tracking)
+     - `last_reset_date` (for daily reset logic)
+   - Updates `summaries` table column names to match requirements:
+     - `pdf_filename`, `summary_type`, `domain_focus`
+   - Creates `usage_logs` table for API cost tracking
+   - Adds database functions for usage management:
+     - `reset_daily_summary_counts()` - for cron job
+     - `check_daily_usage_limit()` - for usage enforcement
+   - Creates indexes for performance optimization
+   - Sets up RLS policies for `usage_logs`
+
 ---
 
 ## How to apply the SQL (Supabase Dashboard)
@@ -60,6 +74,7 @@ Run the files **in this exact order** from the Supabase SQL Editor:
 3. New query → paste `02_core_tables.sql` → **Run**.
 4. New query → paste `03_storage.sql` → **Run**.
 5. New query → paste `04_chat.sql` → **Run**.
+6. New query → paste `05_pdf_summarizer_tables.sql` → **Run** (for PDF Summarizer Phase 1).
 
 You can also automate this with the Supabase CLI, but the SQL is designed to be copy–pasted into the Dashboard.
 
@@ -81,6 +96,7 @@ After running the scripts, verify in the Supabase Dashboard:
    - `admin_metrics`
    - `chat_sessions`
    - `messages`
+   - `usage_logs` (Phase 1)
 
 2. **Authentication → Users**
    - Create / sign up a test user.

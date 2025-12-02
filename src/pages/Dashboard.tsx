@@ -154,11 +154,15 @@ const Dashboard = () => {
             </p>
           </div>
 
-          {/* Upload Button */}
-          <div className="mb-8">
+          {/* Action Buttons */}
+          <div className="mb-8 flex gap-3">
             <Button variant="hero" onClick={() => setShowUpload(true)}>
               <Plus className="w-4 h-4 mr-2" />
               Upload Document
+            </Button>
+            <Button variant="outline" onClick={() => navigate("/summarizer")}>
+              <FileText className="w-4 h-4 mr-2" />
+              PDF Summarizer
             </Button>
           </div>
 
