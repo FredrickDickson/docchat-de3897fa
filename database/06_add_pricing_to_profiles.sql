@@ -14,3 +14,13 @@ BEGIN
   WHERE usage_reset_at < now();
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Create function to increment daily usage safely
+CREATE OR REPLACE FUNCTION public.increment_daily_usage(user_id_param UUID)
+RETURNS void AS $$
+BEGIN
+  UPDATE public.profiles
+  SET daily_usage = daily_usage + 1
+  WHERE user_id = user_id_param;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

@@ -21,6 +21,9 @@ export type Database = {
           display_name: string | null
           id: string
           updated_at: string
+          plan: string
+          daily_usage: number
+          usage_reset_at: string
         }
         Insert: {
           avatar_url?: string | null
@@ -28,6 +31,9 @@ export type Database = {
           display_name?: string | null
           id: string
           updated_at?: string
+          plan?: string
+          daily_usage?: number
+          usage_reset_at?: string
         }
         Update: {
           avatar_url?: string | null
@@ -35,6 +41,9 @@ export type Database = {
           display_name?: string | null
           id?: string
           updated_at?: string
+          plan?: string
+          daily_usage?: number
+          usage_reset_at?: string
         }
         Relationships: []
       }
