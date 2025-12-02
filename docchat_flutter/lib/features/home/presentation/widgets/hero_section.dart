@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class HeroSection extends StatelessWidget {
   const HeroSection({super.key});
@@ -6,45 +7,46 @@ class HeroSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Chat with your documents.\nGet instant AI summaries.',
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+    final isMobile = MediaQuery.of(context).size.width < 768;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // Main headline
+        Text(
+          'Chat with Your Documents,\nInstantly.',
+          textAlign: TextAlign.center,
+          style: theme.textTheme.displayMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            fontSize: isMobile ? 32 : 48,
+            height: 1.2,
           ),
-          const SizedBox(height: 12),
-          Text(
-            'Upload PDFs, Word, or PowerPoint files and ask questions in plain language. '
-            'DocChat summarizes and explains your content in seconds.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
+        ),
+        const SizedBox(height: 16),
+        // Subtitle
+        Text(
+          'Unlock insights from any PDF. Summarize, ask questions, and get answers in seconds with our AI.',
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodyLarge?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            fontSize: isMobile ? 16 : 18,
           ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              FilledButton(
-                onPressed: () {
-                  // Navigation to signup or dashboard is handled by the caller.
-                },
-                child: const Text('Get Started Free'),
-              ),
-              const SizedBox(width: 12),
-              OutlinedButton(
-                onPressed: () {},
-                child: const Text('View Pricing'),
-              ),
-            ],
+        ),
+        const SizedBox(height: 32),
+        // CTA Button
+        FilledButton(
+          onPressed: () => context.go('/signup'),
+          style: FilledButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+            minimumSize: const Size(200, 56),
           ),
-        ],
-      ),
+          child: const Text(
+            'Try DocChat Free',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+        ),
+      ],
     );
   }
 }
-
-

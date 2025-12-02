@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class PricingSection extends StatelessWidget {
   const PricingSection({super.key});
@@ -6,117 +7,184 @@ class PricingSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Pricing',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+    final isMobile = MediaQuery.of(context).size.width < 768;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          'Choose Your Plan',
+          style: theme.textTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.bold,
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: const [
-              Expanded(
-                child: _PricingCard(
-                  title: 'Free',
-                  price: '\$0',
-                  description: '3 summaries per day. Great for quick checks.',
-                  features: [
-                    'Up to 3 summaries/day',
-                    'Basic chat with documents',
-                    'Email support',
-                  ],
-                ),
-              ),
-              SizedBox(width: 16),
-              Expanded(
-                child: _PricingCard(
-                  title: 'Pro',
-                  price: '\$19/mo',
-                  description: 'Unlimited summaries for power users.',
-                  features: [
-                    'Unlimited summaries',
-                    'Priority AI models',
-                    'Priority support',
-                  ],
-                  highlight: true,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 32),
+        if (isMobile)
+          _buildMobilePricing(context, theme)
+        else
+          _buildDesktopPricing(context, theme),
+      ],
     );
   }
-}
 
-class _PricingCard extends StatelessWidget {
-  const _PricingCard({
-    required this.title,
-    required this.price,
-    required this.description,
-    required this.features,
-    this.highlight = false,
-  });
+  Widget _buildMobilePricing(BuildContext context, ThemeData theme) {
+    return Column(
+      children: _buildPricingCards(context, theme),
+    );
+  }
 
-  final String title;
-  final String price;
-  final String description;
-  final List<String> features;
-  final bool highlight;
+  Widget _buildDesktopPricing(BuildContext context, ThemeData theme) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: _buildPricingCards(context, theme)
+          .map((card) => Expanded(child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: card,
+              )))
+          .toList(),
+    );
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+  List<Widget> _buildPricingCards(BuildContext context, ThemeData theme) {
+    return [
+      _buildPlanCard(
+        context,
+        theme,
+        title: 'Free',
+        price: '\$0',
+        period: '/month',
+        description: 'For casual users getting started.',
+        features: [
+          '3 documents per month',
+          '50 pages per document',
+          'Standard Q&A model',
+        ],
+        buttonText: 'Get Started',
+        isPopular: false,
+      ),
+      _buildPlanCard(
+        context,
+        theme,
+        title: 'Pro',
+        price: '\$10',
+        period: '/month',
+        description: 'For power users and professionals.',
+        features: [
+          'Unlimited documents',
+          '2000 pages per document',
+          'Advanced AI model',
+          'Priority support',
+        ],
+        buttonText: 'Choose Pro',
+        isPopular: true,
+      ),
+    ];
+  }
+
+  Widget _buildPlanCard(
+    BuildContext context,
+    ThemeData theme, {
+    required String title,
+    required String price,
+    required String period,
+    required String description,
+    required List<String> features,
+    required String buttonText,
+    required bool isPopular,
+  }) {
     return Card(
-      color: highlight ? colorScheme.primaryContainer : null,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+      child: Container(
+        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (isPopular)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'MOST POPULAR',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onPrimary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            if (isPopular) const SizedBox(height: 12),
             Text(
               title,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              price,
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  price,
+                  style: theme.textTheme.displaySmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    period,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
             Text(
               description,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 12),
-            for (final f in features)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                child: Row(
-                  children: [
-                    const Icon(Icons.check, size: 18),
-                    const SizedBox(width: 6),
-                    Expanded(child: Text(f)),
-                  ],
-                ),
-              ),
+            const SizedBox(height: 24),
+            ...features.map((feature) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.check_circle,
+                        color: Colors.green,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          feature,
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: isPopular
+                  ? FilledButton(
+                      onPressed: () => context.go('/signup'),
+                      child: Text(buttonText),
+                    )
+                  : OutlinedButton(
+                      onPressed: () => context.go('/signup'),
+                      child: Text(buttonText),
+                    ),
+            ),
           ],
         ),
       ),
     );
   }
 }
-
-

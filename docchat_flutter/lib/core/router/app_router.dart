@@ -11,14 +11,17 @@ import '../../features/home/presentation/screens/privacy_screen.dart';
 import '../../features/home/presentation/screens/terms_screen.dart';
 import '../../features/home/presentation/screens/contact_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
+import 'router_refresh_notifier.dart';
 
 /// App router provider
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authProvider);
+  final notifier = ref.watch(routerRefreshNotifierProvider);
   
   return GoRouter(
     initialLocation: '/',
+    refreshListenable: notifier,
     redirect: (context, state) {
+      final authState = ref.read(authProvider);
       final isAuthenticated = authState.status == AuthStatus.authenticated;
       final location = state.matchedLocation;
 

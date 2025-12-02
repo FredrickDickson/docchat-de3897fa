@@ -109,6 +109,7 @@ class ChatRepository implements ChatRepositoryInterface {
   Future<Message> sendMessage({
     required String chatSessionId,
     required String content,
+    String role = 'user',
   }) async {
     try {
       final user = SupabaseConfig.currentUser;
@@ -121,7 +122,7 @@ class ChatRepository implements ChatRepositoryInterface {
           .insert(<String, dynamic>{
             'chat_session_id': chatSessionId,
             'user_id': user.id,
-            'role': 'user',
+            'role': role,
             'content': content,
           })
           .select()

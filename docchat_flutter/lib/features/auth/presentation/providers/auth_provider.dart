@@ -148,17 +148,34 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   /// Get user-friendly error message
   String _getErrorMessage(dynamic error) {
-    if (error.toString().contains('Invalid login credentials')) {
-      return 'Invalid email or password';
-    } else if (error.toString().contains('Email not confirmed')) {
-      return 'Please confirm your email address';
-    } else if (error.toString().contains('User already registered')) {
-      return 'An account with this email already exists';
-    } else if (error.toString().contains('cancelled')) {
+    final errorString = error.toString().toLowerCase();
+    
+    if (errorString.contains('invalid login credentials') || 
+        errorString.contains('invalid_credentials')) {
+      return 'Invalid email or password. Please check your credentials and try again.';
+    } else if (errorString.contains('email not confirmed') || 
+               errorString.contains('email_not_confirmed')) {
+      return 'Please confirm your email address before signing in. Check your inbox for a confirmation link.';
+    } else if (errorString.contains('user already registered') || 
+               errorString.contains('user_already_registered')) {
+      return 'An account with this email already exists. Please sign in instead.';
+    } else if (errorString.contains('cancelled')) {
       return 'Sign in was cancelled';
-    } else if (error.toString().contains('network')) {
-      return 'Network error. Please check your connection';
+    } else if (errorString.contains('network') || 
+               errorString.contains('connection')) {
+      return 'Network error. Please check your internet connection and try again.';
+    } else if (errorString.contains('too many requests')) {
+      return 'Too many login attempts. Please wait a few minutes and try again.';
     }
-    return 'An error occurred. Please try again';
+    
+    // Extract message from exception if available
+    if (error is Exception) {
+      final message = error.toString();
+      if (message.contains(':')) {
+        return message.split(':').last.trim();
+      }
+    }
+    
+    return 'An error occurred. Please try again. If the problem persists, try signing up for a new account.';
   }
 }

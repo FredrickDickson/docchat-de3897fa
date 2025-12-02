@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../providers/auth_provider.dart';
@@ -60,6 +61,15 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     });
 
     return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.home),
+          onPressed: () => context.go('/'),
+          tooltip: 'Home',
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -132,7 +142,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                         onPressed: isLoading
                             ? null
                             : () {
-                                Navigator.of(context).pushReplacementNamed('/login');
+                                context.go('/login');
                               },
                         child: const Text('Sign In'),
                       ),

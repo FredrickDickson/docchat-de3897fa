@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/repositories/chat_repository.dart';
 import '../../domain/repositories/chat_repository_interface.dart';
+import '../../../../core/services/ai_service.dart';
+import '../../../../core/providers/ai_provider.dart';
 import 'chat_state.dart';
 
 final chatRepositoryProvider = Provider<ChatRepositoryInterface>((ref) {
@@ -11,14 +13,19 @@ final chatRepositoryProvider = Provider<ChatRepositoryInterface>((ref) {
 final chatProvider =
     StateNotifierProvider<ChatNotifier, ChatState>((ref) => ChatNotifier(
           repository: ref.watch(chatRepositoryProvider),
+          aiService: ref.watch(aiServiceProvider),
         ));
 
 class ChatNotifier extends StateNotifier<ChatState> {
-  ChatNotifier({required ChatRepositoryInterface repository})
-      : _repository = repository,
+  ChatNotifier({
+    required ChatRepositoryInterface repository,
+    required AIService aiService,
+  })  : _repository = repository,
+        _aiService = aiService,
         super(const ChatState());
 
   final ChatRepositoryInterface _repository;
+  final AIService _aiService;
 
   Future<void> loadSessions() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
@@ -89,11 +96,40 @@ class ChatNotifier extends StateNotifier<ChatState> {
 
     state = state.copyWith(isSending: true, errorMessage: null);
     try {
-      final message = await _repository.sendMessage(
+      // 1. Save user message
+      final userMessage = await _repository.sendMessage(
         chatSessionId: session.id,
         content: content.trim(),
+        role: 'user',
       );
-      final updatedMessages = [...state.messages, message];
+      
+      // Update state with user message immediately
+      var updatedMessages = [...state.messages, userMessage];
+      state = state.copyWith(
+        messages: updatedMessages,
+      );
+
+      // 2. Prepare context for AI
+      final history = updatedMessages.map((m) => {
+        'role': m.role,
+        'content': m.content,
+      }).toList();
+      
+      // Add system prompt if needed (can be customized based on document)
+      // history.insert(0, {'role': 'system', 'content': 'You are a helpful assistant.'});
+
+      // 3. Call AI Service
+      final aiResponseContent = await _aiService.chat(history);
+
+      // 4. Save AI response
+      final aiMessage = await _repository.sendMessage(
+        chatSessionId: session.id,
+        content: aiResponseContent,
+        role: 'assistant',
+      );
+
+      // 5. Update state with AI message
+      updatedMessages = [...updatedMessages, aiMessage];
       state = state.copyWith(
         isSending: false,
         messages: updatedMessages,

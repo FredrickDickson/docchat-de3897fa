@@ -14,6 +14,7 @@ abstract class ChatRepositoryInterface {
   Future<Message> sendMessage({
     required String chatSessionId,
     required String content,
+    String role = 'user',
   });
 }
 

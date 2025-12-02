@@ -9,6 +9,7 @@ class EnvConfig {
 
   // AI Service
   static String get openAiApiKey => dotenv.env['OPENAI_API_KEY'] ?? '';
+  static String get deepSeekApiKey => dotenv.env['DEEPSEEK_API_KEY'] ?? '';
 
   // App
   static String get appName => dotenv.env['APP_NAME'] ?? 'DocChat';

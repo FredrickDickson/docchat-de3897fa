@@ -1377,3 +1377,202 @@ If you want, I can also generate:
 🔥 **Backend code to process the uploaded PDFs**
 
 Just tell me: **“Give me the full SQL file”** or **“Generate the backend upload endpoint.”**
+
+
+
+Great — using **DeepSeek** for the AI summarization is a smart move because it’s *much cheaper* and very fast for long-form PDFs.
+I’ll show you exactly how to integrate DeepSeek **step-by-step**, including the code you need and the architecture change.
+
+---
+
+# ✅ **How to Use DeepSeek API for Your PDF Summarizer**
+
+Here is your new pipeline:
+
+1. **User uploads PDF → Supabase Storage**
+2. **Your backend (Node, Python, or Edge) downloads the PDF**
+3. **Extract text using a parser (e.g., pdf.js, pdf-parse, PyPDF2, or OCR if needed)**
+4. **Send extracted text to DeepSeek API**
+5. **Save summary in Supabase (summaries table)**
+6. **Send summary back to frontend**
+
+---
+
+# 🧩 **1. DeepSeek API Key (Environment Variable)**
+
+Add this to `.env.local` or server environment:
+
+```
+DEEPSEEK_API_KEY=your_key_here
+```
+
+Never expose this in frontend code — always call via your backend.
+
+---
+
+# 🧩 **2. DeepSeek API Call (JavaScript Example)**
+
+Use this in your backend route or serverless function:
+
+```js
+const summarizeWithDeepSeek = async (text) => {
+  const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      model: "deepseek-chat",
+      messages: [
+        {
+          role: "system",
+          content: "You are an expert summarizer. Extract key insights, be accurate, and preserve meaning."
+        },
+        {
+          role: "user",
+          content: `Summarize the following PDF content into 200–300 words:\n\n${text}`
+        }
+      ],
+      temperature: 0.2,
+      max_tokens: 800
+    })
+  });
+
+  const json = await response.json();
+  return json.choices[0].message.content;
+};
+```
+
+---
+
+# 🧩 **3. Python Version (FastAPI / Flask)**
+
+```python
+import requests
+import os
+
+def summarize_with_deepseek(text):
+    url = "https://api.deepseek.com/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {os.getenv('DEEPSEEK_API_KEY')}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "model": "deepseek-chat",
+        "messages": [
+            {"role": "system", "content": "You summarize documents with high accuracy."},
+            {"role": "user", "content": f"Summarize this PDF content:\n{text}"}
+        ],
+        "temperature": 0.2,
+        "max_tokens": 800,
+    }
+
+    response = requests.post(url, json=payload, headers=headers)
+    return response.json()["choices"][0]["message"]["content"]
+```
+
+---
+
+# 🧩 **4. Recommended Prompt Template (optimized)**
+
+```txt
+You are a domain-aware document summarizer. 
+Your job is to read long PDF text and produce a concise, accurate summary.
+
+Requirements:
+- 200–300 words (or user-selected length)
+- Capture key arguments, insights, and conclusions
+- Maintain factual accuracy
+- Remove fluff, redundancy, and page numbers
+- If legal: extract obligations, clauses, risks
+- If finance: extract metrics, trends, recommendations
+```
+
+You can change summary style: bullets, short, detailed, legal-focused, etc.
+
+---
+
+# 🧩 **5. Suggested Architecture With DeepSeek**
+
+```
+Frontend (Flutter / React)
+       ↓ upload
+Supabase Storage (pdf-uploads)
+       ↓
+Backend API (Node/FastAPI/Edge)
+       ↓ download file
+PDF Parser (pdf-parse / PyPDF2 / OCR)
+       ↓ extracted text
+DeepSeek API (summarize)
+       ↓
+Supabase DB (summaries table)
+       ↓
+Frontend (displays result)
+```
+
+No need for OpenAI — DeepSeek handles everything.
+
+---
+
+# 🧩 **6. Cost Structure (DeepSeek is extremely cheap)**
+
+DeepSeek pricing (as of 2025):
+
+| Model            | Input Cost         | Output Cost        | Notes           |
+| ---------------- | ------------------ | ------------------ | --------------- |
+| deepseek-chat    | ~$0.27 / 1M tokens | ~$1.10 / 1M tokens | extremely cheap |
+| deepseek-r1 / v3 | slightly higher    |                    | optional        |
+
+Typical PDF (20 pages → 8k tokens extract)
+→ **cost ≈ $0.003 per summary** (less than half a cent)
+
+Your SaaS plan ($19/mo unlimited) is very profitable.
+
+---
+
+# 🧩 **7. Backend Endpoint Example (Node.js / Express)**
+
+This endpoint handles everything:
+
+```js
+app.post("/api/summarize", async (req, res) => {
+  const { filePath, userId } = req.body;
+
+  // 1. download PDF from Supabase
+  const { data: pdfData } = await supabase.storage
+    .from("pdf-uploads")
+    .download(filePath);
+
+  const buffer = Buffer.from(await pdfData.arrayBuffer());
+
+  // 2. extract text
+  const pdfParse = require("pdf-parse");
+  const parsed = await pdfParse(buffer);
+
+  // 3. summarize
+  const summary = await summarizeWithDeepSeek(parsed.text);
+
+  // 4. save in DB
+  await supabase.from("summaries").insert({
+    user_id: userId,
+    pdf_name: filePath,
+    summary_text: summary,
+  });
+
+  res.json({ summary });
+});
+```
+
+---
+
+# 🚀 **If you want, I can generate:**
+
+✅ Full backend (Node or Python)
+✅ Flutter frontend integration
+✅ Worker script to handle long PDFs
+✅ Supabase Edge Function version
+✅ Prompt presets (legal, finance, academic)
+✅ Full project folder structure
+
+Just tell me: **“Generate the full backend architecture.”**
