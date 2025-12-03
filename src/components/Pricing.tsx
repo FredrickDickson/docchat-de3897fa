@@ -1,5 +1,10 @@
+import { useState } from "react";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const plans = [
   {
@@ -15,6 +20,7 @@ const plans = [
     ],
     cta: "Start free",
     variant: "outline" as const,
+    action: "free",
   },
   {
     name: "Pro",
@@ -32,6 +38,7 @@ const plans = [
     cta: "Get Pro",
     variant: "hero" as const,
     popular: true,
+    action: "pro",
   },
   {
     name: "Credits",
@@ -47,10 +54,62 @@ const plans = [
     ],
     cta: "Buy credits",
     variant: "outline" as const,
+    action: "credits",
   },
 ];
 
 const Pricing = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState<string | null>(null);
+
+  const handlePlanClick = async (action: string) => {
+    if (action === "free") {
+      if (user) {
+        navigate("/dashboard");
+      } else {
+        navigate("/auth");
+      }
+      return;
+    }
+
+    if (action === "pro") {
+      if (!user) {
+        navigate("/auth");
+        return;
+      }
+
+      setIsLoading("pro");
+      try {
+        const { data, error } = await supabase.functions.invoke('create-checkout');
+        
+        if (error) throw error;
+        
+        if (data?.url) {
+          window.open(data.url, '_blank');
+        }
+      } catch (error) {
+        console.error('Error creating checkout session:', error);
+        toast({
+          title: "Error",
+          description: "Could not initiate checkout. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(null);
+      }
+      return;
+    }
+
+    if (action === "credits") {
+      toast({
+        title: "Coming soon",
+        description: "Credit purchases will be available soon.",
+      });
+    }
+  };
+
   return (
     <section id="pricing" className="py-20 bg-background">
       <div className="container mx-auto px-4">
@@ -98,8 +157,13 @@ const Pricing = () => {
                 ))}
               </ul>
 
-              <Button variant={plan.variant} className="w-full">
-                {plan.cta}
+              <Button 
+                variant={plan.variant} 
+                className="w-full"
+                onClick={() => handlePlanClick(plan.action)}
+                disabled={isLoading === plan.action}
+              >
+                {isLoading === plan.action ? "Loading..." : plan.cta}
               </Button>
             </div>
           ))}

@@ -4,6 +4,10 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import * as pdfjsLib from "pdfjs-dist";
+
+// Set the worker source for PDF.js
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 interface DocumentUploadProps {
   onUploadComplete: () => void;
@@ -16,6 +20,7 @@ const DocumentUpload = ({ onUploadComplete, onCancel }: DocumentUploadProps) => 
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+  const [uploadStatus, setUploadStatus] = useState<string>("");
 
   const validateFile = (file: File) => {
     const validTypes = [
@@ -43,6 +48,28 @@ const DocumentUpload = ({ onUploadComplete, onCancel }: DocumentUploadProps) => 
       return false;
     }
     return true;
+  };
+
+  const extractTextFromPDF = async (file: File): Promise<string> => {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let fullText = "";
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items
+          .map((item: any) => item.str)
+          .join(" ");
+        fullText += pageText + "\n\n";
+      }
+
+      return fullText;
+    } catch (error) {
+      console.error("Error extracting text from PDF:", error);
+      return "";
+    }
   };
 
   const handleDrag = (e: React.DragEvent) => {
@@ -83,10 +110,12 @@ const DocumentUpload = ({ onUploadComplete, onCancel }: DocumentUploadProps) => 
     if (!file || !user) return;
 
     setIsUploading(true);
+    setUploadStatus("Uploading file...");
 
     try {
       const fileExt = file.name.split(".").pop();
-      const filePath = `${user.id}/${crypto.randomUUID()}.${fileExt}`;
+      const documentId = crypto.randomUUID();
+      const filePath = `${user.id}/${documentId}.${fileExt}`;
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage
@@ -97,15 +126,44 @@ const DocumentUpload = ({ onUploadComplete, onCancel }: DocumentUploadProps) => 
 
       // Create database record
       const { error: dbError } = await supabase.from("documents").insert({
+        id: documentId,
         user_id: user.id,
         name: file.name,
         file_path: filePath,
         file_size: file.size,
         file_type: file.type,
-        status: "ready",
+        status: "processing",
       });
 
       if (dbError) throw dbError;
+
+      // Extract text from PDF
+      if (file.type === "application/pdf" || file.name.endsWith(".pdf")) {
+        setUploadStatus("Extracting text from PDF...");
+        const extractedText = await extractTextFromPDF(file);
+
+        if (extractedText) {
+          setUploadStatus("Processing document for chat...");
+          // Call edge function to process and store chunks
+          const { error: processError } = await supabase.functions.invoke("process-pdf", {
+            body: {
+              text: extractedText,
+              pdfId: documentId,
+              userId: user.id,
+            },
+          });
+
+          if (processError) {
+            console.error("Error processing PDF:", processError);
+          }
+        }
+      }
+
+      // Update status to ready
+      await supabase
+        .from("documents")
+        .update({ status: "ready" })
+        .eq("id", documentId);
 
       toast({
         title: "Document uploaded",
@@ -121,6 +179,7 @@ const DocumentUpload = ({ onUploadComplete, onCancel }: DocumentUploadProps) => 
       });
     } finally {
       setIsUploading(false);
+      setUploadStatus("");
     }
   };
 
@@ -176,15 +235,19 @@ const DocumentUpload = ({ onUploadComplete, onCancel }: DocumentUploadProps) => 
               {formatFileSize(file.size)}
             </p>
           </div>
-          <Button variant="ghost" size="icon" onClick={() => setFile(null)}>
+          <Button variant="ghost" size="icon" onClick={() => setFile(null)} disabled={isUploading}>
             <X className="w-4 h-4" />
           </Button>
         </div>
       )}
 
+      {uploadStatus && (
+        <p className="text-sm text-muted-foreground text-center">{uploadStatus}</p>
+      )}
+
       <div className="flex gap-3 justify-end">
         {onCancel && (
-          <Button variant="ghost" onClick={onCancel}>
+          <Button variant="ghost" onClick={onCancel} disabled={isUploading}>
             Cancel
           </Button>
         )}
@@ -196,7 +259,7 @@ const DocumentUpload = ({ onUploadComplete, onCancel }: DocumentUploadProps) => 
           {isUploading ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Uploading...
+              Processing...
             </>
           ) : (
             <>
