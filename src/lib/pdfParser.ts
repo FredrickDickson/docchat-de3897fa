@@ -61,6 +61,16 @@ export const extractTextFromPDF = async (
   return pages;
 };
 
+interface PDFInfo {
+  Title?: string;
+  Author?: string;
+  Subject?: string;
+  Creator?: string;
+  Producer?: string;
+  CreationDate?: string;
+  ModDate?: string;
+}
+
 /**
  * Get PDF metadata
  * @param file - PDF File object
@@ -72,15 +82,16 @@ export const getPDFMetadata = async (
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   const metadata = await pdf.getMetadata();
+  const info = metadata.info as PDFInfo | undefined;
   
   return {
-    title: metadata.info?.Title,
-    author: metadata.info?.Author,
-    subject: metadata.info?.Subject,
-    creator: metadata.info?.Creator,
-    producer: metadata.info?.Producer,
-    creationDate: metadata.info?.CreationDate,
-    modificationDate: metadata.info?.ModDate,
+    title: info?.Title,
+    author: info?.Author,
+    subject: info?.Subject,
+    creator: info?.Creator,
+    producer: info?.Producer,
+    creationDate: info?.CreationDate,
+    modificationDate: info?.ModDate,
     numPages: pdf.numPages,
   };
 };

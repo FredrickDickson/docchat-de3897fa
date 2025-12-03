@@ -17,12 +17,12 @@ import { exportAsTXT, exportAsJSON, exportAsCSV } from "@/lib/exportUtils";
 
 interface Summary {
   id: string;
-  pdf_filename: string;
-  summary_text: string;
-  summary_type: string;
-  domain_focus: string;
-  cost_usd: number;
-  created_at: string;
+  pdf_name: string | null;
+  summary_text: string | null;
+  summary_length: string | null;
+  domain: string | null;
+  cost_usd: number | null;
+  created_at: string | null;
 }
 
 const SummaryHistory = () => {
@@ -74,19 +74,19 @@ const SummaryHistory = () => {
     if (searchQuery) {
       filtered = filtered.filter(
         s =>
-          s.pdf_filename.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          s.summary_text.toLowerCase().includes(searchQuery.toLowerCase())
+          (s.pdf_name?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          (s.summary_text?.toLowerCase().includes(searchQuery.toLowerCase()))
       );
     }
 
     // Type filter
     if (filterType !== 'all') {
-      filtered = filtered.filter(s => s.summary_type === filterType);
+      filtered = filtered.filter(s => s.summary_length === filterType);
     }
 
     // Domain filter
     if (filterDomain !== 'all') {
-      filtered = filtered.filter(s => s.domain_focus === filterDomain);
+      filtered = filtered.filter(s => s.domain === filterDomain);
     }
 
     setFilteredSummaries(filtered);
@@ -122,12 +122,12 @@ const SummaryHistory = () => {
 
   const handleDownload = (summary: Summary, format: 'txt' | 'json' | 'csv') => {
     const data = {
-      summary: summary.summary_text,
-      filename: summary.pdf_filename,
-      type: summary.summary_type,
-      domain: summary.domain_focus,
-      cost: summary.cost_usd,
-      created_at: summary.created_at,
+      summary: summary.summary_text || '',
+      filename: summary.pdf_name || 'document.pdf',
+      type: summary.summary_length || 'medium',
+      domain: summary.domain || 'general',
+      cost: summary.cost_usd || 0,
+      created_at: summary.created_at || new Date().toISOString(),
     };
 
     if (format === 'txt') {
@@ -264,21 +264,21 @@ const SummaryHistory = () => {
                 <div className="flex-1">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <FileText className="w-5 h-5" />
-                    {summary.pdf_filename}
+                    {summary.pdf_name || 'Untitled'}
                   </CardTitle>
                   <CardDescription className="mt-2 flex items-center gap-4">
                     <span className="flex items-center gap-1">
                       <Calendar className="w-4 h-4" />
-                      {formatDate(summary.created_at)}
+                      {formatDate(summary.created_at || '')}
                     </span>
-                    <Badge className={getTypeBadgeColor(summary.summary_type)}>
-                      {summary.summary_type}
+                    <Badge className={getTypeBadgeColor(summary.summary_length || '')}>
+                      {summary.summary_length || 'medium'}
                     </Badge>
                     <Badge variant="outline">
-                      {summary.domain_focus}
+                      {summary.domain || 'general'}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
-                      ${summary.cost_usd.toFixed(4)}
+                      ${(summary.cost_usd || 0).toFixed(4)}
                     </span>
                   </CardDescription>
                 </div>
@@ -330,7 +330,7 @@ const SummaryHistory = () => {
             {selectedSummary?.id === summary.id && (
               <CardContent>
                 <div className="prose dark:prose-invert max-w-none max-h-96 overflow-y-auto">
-                  <p className="whitespace-pre-wrap text-sm">{summary.summary_text}</p>
+                  <p className="whitespace-pre-wrap text-sm">{summary.summary_text || ''}</p>
                 </div>
                 <div className="mt-4 flex gap-2">
                   <Button

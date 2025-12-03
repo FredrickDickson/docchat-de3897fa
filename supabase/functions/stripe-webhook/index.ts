@@ -88,8 +88,9 @@ serve(async (req) => {
       headers: { 'Content-Type': 'application/json' },
       status: 200,
     });
-  } catch (err) {
-    console.error(`Webhook Error: ${err.message}`);
-    return new Response(`Webhook Error: ${err.message}`, { status: 400 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    console.error(`Webhook Error: ${message}`);
+    return new Response(`Webhook Error: ${message}`, { status: 400 });
   }
 });

@@ -25,25 +25,6 @@ export const ChatInterface = ({ pdfId, userId }: ChatInterfaceProps) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Fetch existing messages
-    const fetchMessages = async () => {
-      const { data, error } = await supabase
-        .from('chat_messages')
-        .select('*')
-        .eq('pdf_id', pdfId)
-        .order('created_at', { ascending: true });
-
-      if (error) {
-        console.error('Error fetching messages:', error);
-      } else {
-        setMessages(data || []);
-      }
-    };
-
-    fetchMessages();
-  }, [pdfId]);
-
-  useEffect(() => {
     // Scroll to bottom on new message
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
@@ -67,7 +48,7 @@ export const ChatInterface = ({ pdfId, userId }: ChatInterfaceProps) => {
           userId,
           pdfId,
           question: userMessage,
-          domain: 'general' // Could be dynamic
+          domain: 'general'
         }
       });
 
@@ -83,7 +64,6 @@ export const ChatInterface = ({ pdfId, userId }: ChatInterfaceProps) => {
         description: "Failed to get response from AI.",
         variant: "destructive",
       });
-      // Remove optimistic message on error? Or keep it and show error state.
     } finally {
       setIsLoading(false);
     }
@@ -93,6 +73,12 @@ export const ChatInterface = ({ pdfId, userId }: ChatInterfaceProps) => {
     <div className="flex flex-col h-[600px] border rounded-lg bg-background">
       <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
         <div className="space-y-4">
+          {messages.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground">
+              <Bot className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p>Ask a question about this document to get started.</p>
+            </div>
+          )}
           {messages.map((msg) => (
             <div
               key={msg.id}

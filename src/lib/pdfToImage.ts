@@ -46,6 +46,7 @@ const pageToCanvas = async (
   const renderContext = {
     canvasContext: context,
     viewport: viewport,
+    canvas: canvas,
   };
   
   await page.render(renderContext).promise;
