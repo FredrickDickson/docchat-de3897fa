@@ -5,7 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Loader2, User, Bot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { chatWithDocument, isPuterAILoaded } from "@/lib/puterChat";
+import { streamChatWithDocument, isPuterAILoaded } from "@/lib/puterChat";
 
 interface Message {
   id: string;
@@ -91,15 +91,36 @@ export const ChatInterface = ({ pdfId, userId }: ChatInterfaceProps) => {
     setInput("");
     setIsLoading(true);
 
-    const tempId = Math.random().toString();
-    setMessages(prev => [...prev, { id: tempId, sender: 'user', message: userMessage }]);
+    const userMsgId = Math.random().toString();
+    const aiMsgId = Math.random().toString();
+    
+    // Add user message
+    setMessages(prev => [...prev, { id: userMsgId, sender: 'user', message: userMessage }]);
+    
+    // Add empty AI message for streaming
+    setMessages(prev => [...prev, { id: aiMsgId, sender: 'ai', message: '' }]);
 
     try {
-      // Use Puter.js AI for chat (client-side, free)
-      const answer = await chatWithDocument(userMessage, documentText, 'general');
-      setMessages(prev => [...prev, { id: Math.random().toString(), sender: 'ai', message: answer }]);
+      // Use streaming Puter.js AI for chat
+      await streamChatWithDocument(
+        userMessage, 
+        documentText, 
+        (chunk) => {
+          // Update the AI message with each streamed chunk
+          setMessages(prev => 
+            prev.map(msg => 
+              msg.id === aiMsgId 
+                ? { ...msg, message: msg.message + chunk }
+                : msg
+            )
+          );
+        },
+        'general'
+      );
     } catch (error) {
       console.error('Chat error:', error);
+      // Remove the empty AI message on error
+      setMessages(prev => prev.filter(msg => msg.id !== aiMsgId));
       toast({
         title: "Error",
         description: "Failed to get response from AI. Please try again.",
@@ -131,38 +152,34 @@ export const ChatInterface = ({ pdfId, userId }: ChatInterfaceProps) => {
                 {msg.sender === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
               </div>
               <div
-                className={`p-3 rounded-lg max-w-[80%] text-sm ${
+                className={`p-3 rounded-lg max-w-[80%] text-sm whitespace-pre-wrap ${
                   msg.sender === 'user'
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted text-foreground'
                 }`}
               >
-                {msg.message}
+                {msg.message || (msg.sender === 'ai' && isLoading ? (
+                  <span className="inline-flex items-center gap-1">
+                    <span className="animate-pulse">●</span>
+                    <span className="animate-pulse animation-delay-150">●</span>
+                    <span className="animate-pulse animation-delay-300">●</span>
+                  </span>
+                ) : msg.message)}
               </div>
             </div>
           ))}
-          {isLoading && (
-            <div className="flex items-start gap-2">
-              <div className="p-2 rounded-full bg-muted">
-                <Bot className="w-4 h-4" />
-              </div>
-              <div className="bg-muted p-3 rounded-lg">
-                <Loader2 className="w-4 h-4 animate-spin" />
-              </div>
-            </div>
-          )}
         </div>
       </ScrollArea>
       <div className="p-4 border-t flex gap-2">
         <Input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+          onKeyDown={(e) => e.key === 'Enter' && !isLoading && handleSend()}
           placeholder="Ask a question about this PDF..."
           disabled={isLoading}
         />
         <Button onClick={handleSend} disabled={isLoading || !input.trim()}>
-          <Send className="w-4 h-4" />
+          {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
         </Button>
       </div>
     </div>
