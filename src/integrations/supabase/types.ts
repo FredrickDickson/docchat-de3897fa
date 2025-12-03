@@ -14,75 +14,407 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_metrics: {
+        Row: {
+          api_cost_usd: number | null
+          captured_at: string | null
+          id: string
+          total_revenue_usd: number | null
+          total_summaries: number | null
+          total_users: number | null
+        }
+        Insert: {
+          api_cost_usd?: number | null
+          captured_at?: string | null
+          id?: string
+          total_revenue_usd?: number | null
+          total_summaries?: number | null
+          total_users?: number | null
+        }
+        Update: {
+          api_cost_usd?: number | null
+          captured_at?: string | null
+          id?: string
+          total_revenue_usd?: number | null
+          total_summaries?: number | null
+          total_users?: number | null
+        }
+        Relationships: []
+      }
+      audit_logs: {
+        Row: {
+          created_at: string | null
+          event_type: string | null
+          id: string
+          message: string | null
+          metadata: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_type?: string | null
+          id?: string
+          message?: string | null
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_type?: string | null
+          id?: string
+          message?: string | null
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_sessions: {
+        Row: {
+          created_at: string
+          document_id: string | null
+          id: string
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_sessions_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credits: {
+        Row: {
+          credits: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          credits?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          credits?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credits_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documents: {
+        Row: {
+          created_at: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id: string
+          name: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id?: string
+          name: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_path?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          name?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      files: {
+        Row: {
+          created_at: string | null
+          extracted_text: string | null
+          id: string
+          ocr_used: boolean | null
+          pdf_url: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          extracted_text?: string | null
+          id?: string
+          ocr_used?: boolean | null
+          pdf_url?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          extracted_text?: string | null
+          id?: string
+          ocr_used?: boolean | null
+          pdf_url?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "files_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          chat_session_id: string
+          content: string
+          cost_usd: number | null
+          created_at: string
+          id: string
+          role: string
+          tokens_used: number | null
+          user_id: string
+        }
+        Insert: {
+          chat_session_id: string
+          content: string
+          cost_usd?: number | null
+          created_at?: string
+          id?: string
+          role: string
+          tokens_used?: number | null
+          user_id: string
+        }
+        Update: {
+          chat_session_id?: string
+          content?: string
+          cost_usd?: number | null
+          created_at?: string
+          id?: string
+          role?: string
+          tokens_used?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_chat_session_id_fkey"
+            columns: ["chat_session_id"]
+            isOneToOne: false
+            referencedRelation: "chat_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
           created_at: string
+          daily_usage: number
           display_name: string | null
           id: string
-          updated_at: string
-          user_id: string
           plan: string
+          updated_at: string
+          usage_reset_at: string | null
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          daily_usage?: number
+          display_name?: string | null
+          id?: string
+          plan?: string
+          updated_at?: string
+          usage_reset_at?: string | null
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          daily_usage?: number
+          display_name?: string | null
+          id?: string
+          plan?: string
+          updated_at?: string
+          usage_reset_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean | null
+          created_at: string | null
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          plan: string | null
+          status: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan?: string | null
+          status?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan?: string | null
+          status?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      summaries: {
+        Row: {
+          cost_usd: number | null
+          created_at: string | null
+          domain: string | null
+          id: string
+          pdf_name: string | null
+          pdf_size_mb: number | null
+          summary_length: string | null
+          summary_text: string | null
+          tokens_used: number | null
+          user_id: string | null
+        }
+        Insert: {
+          cost_usd?: number | null
+          created_at?: string | null
+          domain?: string | null
+          id?: string
+          pdf_name?: string | null
+          pdf_size_mb?: number | null
+          summary_length?: string | null
+          summary_text?: string | null
+          tokens_used?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          cost_usd?: number | null
+          created_at?: string | null
+          domain?: string | null
+          id?: string
+          pdf_name?: string | null
+          pdf_size_mb?: number | null
+          summary_length?: string | null
+          summary_text?: string | null
+          tokens_used?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "summaries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
           daily_usage: number
+          email: string | null
+          full_name: string | null
+          id: string
+          plan: string
+          updated_at: string | null
           usage_reset_at: string | null
         }
         Insert: {
           avatar_url?: string | null
-          created_at?: string
-          display_name?: string | null
-          id?: string
-          updated_at?: string
-          user_id: string
-          plan?: string
+          created_at?: string | null
           daily_usage?: number
+          email?: string | null
+          full_name?: string | null
+          id: string
+          plan?: string
+          updated_at?: string | null
           usage_reset_at?: string | null
         }
         Update: {
           avatar_url?: string | null
-          created_at?: string
-          display_name?: string | null
-          id?: string
-          updated_at?: string
-          user_id?: string
-          plan?: string
+          created_at?: string | null
           daily_usage?: number
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          plan?: string
+          updated_at?: string | null
           usage_reset_at?: string | null
-        }
-        Relationships: []
-      }
-      summaries: {
-        Row: {
-          id: string
-          user_id: string
-          pdf_filename: string | null
-          summary_text: string | null
-          summary_type: string | null
-          domain_focus: string | null
-          tokens_used: number | null
-          cost_usd: number | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          pdf_filename?: string | null
-          summary_text?: string | null
-          summary_type?: string | null
-          domain_focus?: string | null
-          tokens_used?: number | null
-          cost_usd?: number | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          pdf_filename?: string | null
-          summary_text?: string | null
-          summary_type?: string | null
-          domain_focus?: string | null
-          tokens_used?: number | null
-          cost_usd?: number | null
-          created_at?: string
         }
         Relationships: []
       }
@@ -91,7 +423,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      increment_daily_usage: {
+        Args: { user_id_param: string }
+        Returns: undefined
+      }
+      reset_daily_usage: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

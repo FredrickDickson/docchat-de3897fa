@@ -144,18 +144,8 @@ const PDFSummarizer = () => {
         console.error('Error saving summary:', summaryError);
       }
 
-      // Log usage
-      const { error: usageError } = await supabase
-        .from('usage_logs')
-        .insert({
-          user_id: user.id,
-          api_cost: response.cost,
-          status: 'success',
-        });
-
-      if (usageError) {
-        console.error('Error logging usage:', usageError);
-      }
+      // Log usage - skip if table doesn't exist (not critical)
+      // Usage is tracked via incrementUsage() below
 
       // Increment daily usage counter
       await incrementUsage();
