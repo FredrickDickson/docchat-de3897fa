@@ -3,12 +3,16 @@
  * Client-side OCR functionality using Puter.js (free, no API key required)
  */
 
+interface PuterStreamChunk {
+  text?: string;
+}
+
 declare global {
   interface Window {
     puter?: {
       ai?: {
         img2txt: (imageUrlOrDataURL: string) => Promise<string>;
-        chat: (prompt: string, options?: { stream?: boolean }) => Promise<string>;
+        chat: (prompt: string, options?: { stream?: boolean; model?: string }) => Promise<string | AsyncIterable<PuterStreamChunk>>;
       };
     };
   }
@@ -81,4 +85,3 @@ export const batchOCR = async (
   
   return results;
 };
-
