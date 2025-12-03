@@ -21,19 +21,21 @@ export type Database = {
           display_name: string | null
           id: string
           updated_at: string
+          user_id: string
           plan: string
           daily_usage: number
-          usage_reset_at: string
+          usage_reset_at: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
-          id: string
+          id?: string
           updated_at?: string
+          user_id: string
           plan?: string
           daily_usage?: number
-          usage_reset_at?: string
+          usage_reset_at?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -41,9 +43,46 @@ export type Database = {
           display_name?: string | null
           id?: string
           updated_at?: string
+          user_id?: string
           plan?: string
           daily_usage?: number
-          usage_reset_at?: string
+          usage_reset_at?: string | null
+        }
+        Relationships: []
+      }
+      summaries: {
+        Row: {
+          id: string
+          user_id: string
+          pdf_filename: string | null
+          summary_text: string | null
+          summary_type: string | null
+          domain_focus: string | null
+          tokens_used: number | null
+          cost_usd: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          pdf_filename?: string | null
+          summary_text?: string | null
+          summary_type?: string | null
+          domain_focus?: string | null
+          tokens_used?: number | null
+          cost_usd?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          pdf_filename?: string | null
+          summary_text?: string | null
+          summary_type?: string | null
+          domain_focus?: string | null
+          tokens_used?: number | null
+          cost_usd?: number | null
+          created_at?: string
         }
         Relationships: []
       }

@@ -21,15 +21,15 @@ serve(async (req) => {
     // Chunk text
     const chunks = chunkText(text);
 
-    // Generate embeddings
-    const openAiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openAiKey) {
-      throw new Error('OPENAI_API_KEY not set');
+    // Generate embeddings using DeepSeek
+    const deepseekKey = Deno.env.get('DEEPSEEK_API_KEY');
+    if (!deepseekKey) {
+      throw new Error('DEEPSEEK_API_KEY not set');
     }
 
     const embeddings = await Promise.all(
       chunks.map(async (chunk, index) => {
-        const embedding = await getEmbedding(chunk, openAiKey);
+        const embedding = await getEmbedding(chunk, deepseekKey);
         return {
           user_id: userId,
           pdf_id: pdfId,
@@ -78,7 +78,7 @@ function chunkText(text: string, chunkSize = 1500, overlap = 200) {
 }
 
 async function getEmbedding(text: string, apiKey: string) {
-  const response = await fetch('https://api.openai.com/v1/embeddings', {
+  const response = await fetch('https://api.deepseek.com/v1/embeddings', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`,
@@ -86,13 +86,13 @@ async function getEmbedding(text: string, apiKey: string) {
     },
     body: JSON.stringify({
       input: text,
-      model: 'text-embedding-3-small',
+      model: 'deepseek-chat', // DeepSeek uses the same model for embeddings
     }),
   });
 
   if (!response.ok) {
     const error = await response.text();
-    throw new Error(`OpenAI API error: ${error}`);
+    throw new Error(`DeepSeek API error: ${error}`);
   }
 
   const data = await response.json();

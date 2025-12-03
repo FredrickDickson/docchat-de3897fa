@@ -18,11 +18,11 @@ serve(async (req) => {
       throw new Error('Missing required fields');
     }
 
-    // 1. Generate embedding for the question
-    const openAiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openAiKey) throw new Error('OPENAI_API_KEY not set');
+    // 1. Generate embedding for the question using DeepSeek
+    const deepseekKey = Deno.env.get('DEEPSEEK_API_KEY');
+    if (!deepseekKey) throw new Error('DEEPSEEK_API_KEY not set');
     
-    const embedding = await getEmbedding(question, openAiKey);
+    const embedding = await getEmbedding(question, deepseekKey);
 
     // 2. Search for relevant chunks
     const supabase = createClient(
@@ -41,10 +41,7 @@ serve(async (req) => {
 
     const context = chunks.map((c: any) => c.chunk_text).join('\n\n');
 
-    // 3. Call DeepSeek API
-    const deepSeekKey = Deno.env.get('DEEPSEEK_API_KEY');
-    if (!deepSeekKey) throw new Error('DEEPSEEK_API_KEY not set');
-
+    // 3. Call DeepSeek API for chat
     const systemPrompt = `You are a precise assistant. Use ONLY the context below to answer. Domain: ${domain}. If domain is legal, highlight obligations/risks. If the answer is not in the context, say "I don't know based on the provided document."`;
     
     const messages = [
@@ -52,7 +49,7 @@ serve(async (req) => {
       { role: 'user', content: `Context:\n${context}\n\nQuestion: ${question}` }
     ];
 
-    const answer = await callDeepSeek(messages, deepSeekKey);
+    const answer = await callDeepSeek(messages, deepseekKey);
 
     // 4. Save chat messages
     await supabase.from('chat_messages').insert([
@@ -75,7 +72,7 @@ serve(async (req) => {
 });
 
 async function getEmbedding(text: string, apiKey: string) {
-  const response = await fetch('https://api.openai.com/v1/embeddings', {
+  const response = await fetch('https://api.deepseek.com/v1/embeddings', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`,
@@ -83,13 +80,13 @@ async function getEmbedding(text: string, apiKey: string) {
     },
     body: JSON.stringify({
       input: text,
-      model: 'text-embedding-3-small',
+      model: 'deepseek-chat',
     }),
   });
 
   if (!response.ok) {
     const error = await response.text();
-    throw new Error(`OpenAI API error: ${error}`);
+    throw new Error(`DeepSeek API error: ${error}`);
   }
 
   const data = await response.json();
