@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import DocumentUpload from "@/components/DocumentUpload";
 import { PlanBadge } from "@/components/dashboard/PlanBadge";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface DocumentRecord {
   id: string;
@@ -135,6 +136,7 @@ const Dashboard = () => {
             <span className="text-sm text-muted-foreground hidden sm:block">
               {user?.email}
             </span>
+            <ThemeToggle />
             <Button variant="ghost" size="icon" onClick={() => navigate("/profile")}>
               <Settings className="w-4 h-4" />
             </Button>
