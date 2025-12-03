@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
@@ -7,10 +7,12 @@ export interface SubscriptionState {
   plan: 'free' | 'pro';
   dailyUsage: number;
   usageResetAt: string | null;
+  subscriptionEnd: string | null;
   isLoading: boolean;
   isOverLimit: boolean;
   checkLimit: () => boolean;
   incrementUsage: () => Promise<void>;
+  refreshSubscription: () => Promise<void>;
 }
 
 export const useSubscription = (): SubscriptionState => {
@@ -19,22 +21,44 @@ export const useSubscription = (): SubscriptionState => {
   const [plan, setPlan] = useState<'free' | 'pro'>('free');
   const [dailyUsage, setDailyUsage] = useState(0);
   const [usageResetAt, setUsageResetAt] = useState<string | null>(null);
+  const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    if (user) {
-      fetchSubscription();
-    } else {
-      setIsLoading(false);
+  const refreshSubscription = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('check-subscription');
+      
+      if (error) {
+        console.error('Error checking subscription:', error);
+        return;
+      }
+
+      if (data) {
+        setPlan(data.plan as 'free' | 'pro');
+        setSubscriptionEnd(data.subscription_end);
+      }
+    } catch (error) {
+      console.error('Error refreshing subscription:', error);
     }
   }, [user]);
 
-  const fetchSubscription = async () => {
+  const fetchSubscription = useCallback(async () => {
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
+
     try {
+      // Check Stripe subscription status
+      await refreshSubscription();
+
+      // Fetch local profile data
       const { data, error } = await supabase
         .from('profiles')
         .select('plan, daily_usage, usage_reset_at')
-        .eq('user_id', user!.id)
+        .eq('user_id', user.id)
         .single();
 
       if (error) throw error;
@@ -49,7 +73,22 @@ export const useSubscription = (): SubscriptionState => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, refreshSubscription]);
+
+  useEffect(() => {
+    fetchSubscription();
+  }, [fetchSubscription]);
+
+  // Auto-refresh subscription every minute
+  useEffect(() => {
+    if (!user) return;
+
+    const interval = setInterval(() => {
+      refreshSubscription();
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, [user, refreshSubscription]);
 
   const checkLimit = () => {
     if (plan === 'pro') return false;
@@ -60,7 +99,6 @@ export const useSubscription = (): SubscriptionState => {
     if (!user) return;
 
     try {
-      // Optimistic update
       setDailyUsage(prev => prev + 1);
 
       const { error } = await supabase.rpc('increment_daily_usage', {
@@ -68,7 +106,6 @@ export const useSubscription = (): SubscriptionState => {
       });
 
       if (error) {
-        // Revert on error
         setDailyUsage(prev => prev - 1);
         console.error('Error incrementing usage:', error);
         toast({
@@ -86,9 +123,11 @@ export const useSubscription = (): SubscriptionState => {
     plan,
     dailyUsage,
     usageResetAt,
+    subscriptionEnd,
     isLoading,
     isOverLimit: checkLimit(),
     checkLimit,
-    incrementUsage
+    incrementUsage,
+    refreshSubscription
   };
 };
