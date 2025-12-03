@@ -19,11 +19,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { exportAsTXT, exportAsJSON, exportAsCSV, copyToClipboard } from "@/lib/exportUtils";
 import { Progress } from "@/components/ui/progress";
+import { useSubscription } from "@/hooks/useSubscription";
+import { UsageIndicator } from "@/components/pricing/UsageIndicator";
+import { ChatInterface } from "@/components/chat/ChatInterface";
 
 const PDFSummarizer = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isOverLimit, dailyUsage, plan, incrementUsage } = useSubscription();
   
   const [extractedText, setExtractedText] = useState<string>("");
   const [summary, setSummary] = useState<string>("");
@@ -32,13 +36,46 @@ const PDFSummarizer = () => {
   const [summaryType, setSummaryType] = useState<'short' | 'medium' | 'detailed' | 'bullets'>('medium');
   const [domainFocus, setDomainFocus] = useState<'legal' | 'finance' | 'academic' | 'general'>('general');
   const [currentSummaryData, setCurrentSummaryData] = useState<any>(null);
+  const [currentPdfId, setCurrentPdfId] = useState<string>("");
 
-  const handleUploadComplete = (fileId: string, text: string) => {
+  const handleUploadComplete = async (fileId: string, text: string) => {
     setExtractedText(text);
+    // Use a temporary ID if fileId is not provided or valid UUID, but ideally we get a real ID
+    // For now, we'll use a generated ID if fileId is empty, but in real app we'd save PDF first
+    const pdfId = fileId || crypto.randomUUID(); 
+    setCurrentPdfId(pdfId);
+
     toast({
       title: "PDF uploaded",
-      description: "Ready to generate summary",
+      description: "Processing for chat and summary...",
     });
+
+    // Process PDF for chat (chunking & embedding)
+    if (user) {
+      try {
+        const { error } = await supabase.functions.invoke('process-pdf', {
+          body: {
+            text,
+            pdfId,
+            userId: user.id
+          }
+        });
+        
+        if (error) throw error;
+        
+        toast({
+          title: "Ready for Chat",
+          description: "You can now ask questions about this PDF.",
+        });
+      } catch (error) {
+        console.error('Error processing PDF for chat:', error);
+        toast({
+          title: "Chat setup failed",
+          description: "You can still summarize, but chat might not work.",
+          variant: "destructive"
+        });
+      }
+    }
   };
 
   const handleGenerateSummary = async () => {
@@ -53,20 +90,16 @@ const PDFSummarizer = () => {
     }, 500);
 
     try {
-      // Check daily usage limit using database function
-      const { data: canProceed, error: limitError } = await supabase
-        .rpc('check_daily_usage_limit', { user_uuid: user.id });
-
-      if (limitError) {
-        console.error('Error checking usage limit:', limitError);
-        // Continue anyway, but log the error
-      } else if (canProceed === false) {
+      // Check daily usage limit
+      if (isOverLimit) {
         toast({
           title: "Daily limit reached",
           description: "You've reached your daily summary limit (3 summaries/day). Upgrade to Pro for unlimited summaries.",
           variant: "destructive",
         });
         setIsGenerating(false);
+        // Redirect to pricing or show modal could go here
+        navigate("/pricing");
         return;
       }
 
@@ -123,6 +156,9 @@ const PDFSummarizer = () => {
       if (usageError) {
         console.error('Error logging usage:', usageError);
       }
+
+      // Increment daily usage counter
+      await incrementUsage();
 
       clearInterval(progressInterval);
       setGenerationProgress(100);
@@ -203,12 +239,14 @@ const PDFSummarizer = () => {
         <main className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto space-y-6">
             <Tabs defaultValue="create" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="create">Create Summary</TabsTrigger>
+                <TabsTrigger value="chat">AI Chat</TabsTrigger>
                 <TabsTrigger value="history">History</TabsTrigger>
               </TabsList>
 
               <TabsContent value="create" className="space-y-6">
+                <UsageIndicator usage={dailyUsage} limit={3} plan={plan} />
                 {/* Upload Section */}
                 {!extractedText && (
               <Card>
@@ -348,6 +386,24 @@ const PDFSummarizer = () => {
                 </CardContent>
               </Card>
             )}
+              </TabsContent>
+
+              <TabsContent value="chat">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Chat with PDF</CardTitle>
+                    <CardDescription>Ask questions about your uploaded document</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {extractedText && currentPdfId ? (
+                      <ChatInterface pdfId={currentPdfId} userId={user?.id || ''} />
+                    ) : (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <p>Upload a PDF in the "Create Summary" tab to start chatting.</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               <TabsContent value="history">

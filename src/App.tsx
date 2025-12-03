@@ -14,6 +14,7 @@ import Terms from "./pages/Terms";
 import Contact from "./pages/Contact";
 import PDFSummarizer from "./pages/PDFSummarizer";
 import IntegrationSettings from "./pages/IntegrationSettings";
+import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -57,6 +58,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <IntegrationSettings />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/pricing" 
+              element={
+                <ProtectedRoute>
+                  <Pricing />
                 </ProtectedRoute>
               } 
             />

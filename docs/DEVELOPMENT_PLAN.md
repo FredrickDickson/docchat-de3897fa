@@ -198,7 +198,7 @@
   - [ ] Build usage display component
   - [ ] Create upgrade prompts when limit reached
 
-- [ ] **Stripe Integration**
+- [ ] **Stripe Integration/ Paystack Integration**
   - [ ] Set up Stripe account and API keys
   - [ ] Create Stripe products and prices ($19/month Pro plan)
   - [ ] Build checkout flow
