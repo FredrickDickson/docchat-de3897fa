@@ -2,7 +2,6 @@ import { MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface HeaderProps {
   showChat: boolean;
@@ -36,7 +35,6 @@ const Header = ({ showChat }: HeaderProps) => {
             </nav>
 
             <div className="flex items-center gap-3">
-              <ThemeToggle />
               {!loading && user ? (
                 <Button variant="hero" size="sm" asChild>
                   <Link to="/dashboard">Dashboard</Link>
