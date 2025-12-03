@@ -15,6 +15,7 @@ import Contact from "./pages/Contact";
 import PDFSummarizer from "./pages/PDFSummarizer";
 import IntegrationSettings from "./pages/IntegrationSettings";
 import Pricing from "./pages/Pricing";
+import ChatPage from "./pages/ChatPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -66,6 +67,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Pricing />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/chat/:id" 
+              element={
+                <ProtectedRoute>
+                  <ChatPage />
                 </ProtectedRoute>
               } 
             />
