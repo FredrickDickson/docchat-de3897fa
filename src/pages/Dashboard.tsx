@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import DocumentUpload from "@/components/DocumentUpload";
+import { PlanBadge } from "@/components/dashboard/PlanBadge";
 
 interface DocumentRecord {
   id: string;
@@ -130,6 +131,7 @@ const Dashboard = () => {
           </div>
           
           <div className="flex items-center gap-4">
+            <PlanBadge />
             <span className="text-sm text-muted-foreground hidden sm:block">
               {user?.email}
             </span>

@@ -16,6 +16,7 @@ import PDFSummarizer from "./pages/PDFSummarizer";
 import IntegrationSettings from "./pages/IntegrationSettings";
 import Pricing from "./pages/Pricing";
 import ChatPage from "./pages/ChatPage";
+import CheckoutSuccess from "./pages/CheckoutSuccess";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -75,6 +76,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <ChatPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/checkout/success" 
+              element={
+                <ProtectedRoute>
+                  <CheckoutSuccess />
                 </ProtectedRoute>
               } 
             />
