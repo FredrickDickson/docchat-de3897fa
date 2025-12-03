@@ -76,6 +76,33 @@ export type Database = {
           },
         ]
       }
+      chat_messages: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          pdf_id: string
+          sender: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          pdf_id: string
+          sender: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          pdf_id?: string
+          sender?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       chat_sessions: {
         Row: {
           created_at: string
@@ -248,6 +275,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pdf_chunks: {
+        Row: {
+          chunk_text: string
+          created_at: string | null
+          embedding: string | null
+          id: string
+          page_number: number | null
+          pdf_id: string
+          user_id: string
+        }
+        Insert: {
+          chunk_text: string
+          created_at?: string | null
+          embedding?: string | null
+          id?: string
+          page_number?: number | null
+          pdf_id: string
+          user_id: string
+        }
+        Update: {
+          chunk_text?: string
+          created_at?: string | null
+          embedding?: string | null
+          id?: string
+          page_number?: number | null
+          pdf_id?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -426,6 +483,19 @@ export type Database = {
       increment_daily_usage: {
         Args: { user_id_param: string }
         Returns: undefined
+      }
+      match_chunks: {
+        Args: {
+          filter_user_id: string
+          match_count: number
+          match_threshold: number
+          query_embedding: string
+        }
+        Returns: {
+          chunk_text: string
+          id: string
+          similarity: number
+        }[]
       }
       reset_daily_usage: { Args: never; Returns: undefined }
     }
