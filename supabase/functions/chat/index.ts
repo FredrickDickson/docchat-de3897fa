@@ -15,43 +15,109 @@ serve(async (req) => {
     const { userId, pdfId, question, domain = 'general' } = await req.json();
 
     if (!userId || !pdfId || !question) {
-      throw new Error('Missing required fields');
+      throw new Error('Missing required fields: userId, pdfId, and question are required.');
     }
 
-    // 1. Generate embedding for the question using DeepSeek
-    const deepseekKey = Deno.env.get('DEEPSEEK_API_KEY');
-    if (!deepseekKey) throw new Error('DEEPSEEK_API_KEY not set');
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) {
+      throw new Error('LOVABLE_API_KEY not set in Supabase function environment.');
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+
+    if (!supabaseUrl || !serviceRoleKey) {
+      throw new Error('SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set.');
+    }
+
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
+
+    // Try to get document content from files table (PDF Summarizer uploads)
+    let documentText = '';
     
-    const embedding = await getEmbedding(question, deepseekKey);
+    // First try the files table
+    const { data: fileData } = await supabase
+      .from('files')
+      .select('extracted_text')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
 
-    // 2. Search for relevant chunks
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    if (fileData?.extracted_text) {
+      documentText = fileData.extracted_text;
+    }
 
-    const { data: chunks, error: searchError } = await supabase.rpc('match_chunks', {
-      query_embedding: embedding,
-      match_threshold: 0.5, // Adjust as needed
-      match_count: 5,
-      filter_user_id: userId
+    // If no text found, try to get from pdf_chunks
+    if (!documentText) {
+      const { data: chunks } = await supabase
+        .from('pdf_chunks')
+        .select('chunk_text')
+        .eq('user_id', userId)
+        .eq('pdf_id', pdfId)
+        .limit(10);
+
+      if (chunks && chunks.length > 0) {
+        documentText = chunks.map(c => c.chunk_text).join('\n\n');
+      }
+    }
+
+    // Build the system prompt based on domain
+    let systemPrompt = `You are a helpful AI assistant that answers questions about documents.`;
+    
+    if (domain === 'legal') {
+      systemPrompt += ` Focus on legal implications, obligations, risks, and compliance aspects.`;
+    } else if (domain === 'finance') {
+      systemPrompt += ` Focus on financial metrics, analysis, and business implications.`;
+    } else if (domain === 'academic') {
+      systemPrompt += ` Focus on academic rigor, methodology, and scholarly analysis.`;
+    }
+
+    systemPrompt += ` If the document context is provided, use it to answer questions. If no relevant information is found, say "I don't have enough information from the document to answer that question."`;
+
+    // Build user message with context
+    let userMessage = question;
+    if (documentText) {
+      // Truncate to avoid token limits (roughly 100k chars for safety)
+      const truncatedText = documentText.slice(0, 100000);
+      userMessage = `Document content:\n---\n${truncatedText}\n---\n\nQuestion: ${question}`;
+    }
+
+    // Call Lovable AI Gateway
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userMessage }
+        ],
+        temperature: 0.3,
+        max_tokens: 1000
+      })
     });
 
-    if (searchError) throw searchError;
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Lovable AI error:', response.status, errorText);
+      
+      if (response.status === 429) {
+        throw new Error('Rate limit exceeded. Please try again in a moment.');
+      }
+      if (response.status === 402) {
+        throw new Error('AI credits exhausted. Please add credits to continue.');
+      }
+      throw new Error(`AI service error: ${response.status}`);
+    }
 
-    const context = chunks.map((c: any) => c.chunk_text).join('\n\n');
+    const aiResponse = await response.json();
+    const answer = aiResponse.choices?.[0]?.message?.content || "I couldn't generate a response.";
 
-    // 3. Call DeepSeek API for chat
-    const systemPrompt = `You are a precise assistant. Use ONLY the context below to answer. Domain: ${domain}. If domain is legal, highlight obligations/risks. If the answer is not in the context, say "I don't know based on the provided document."`;
-    
-    const messages = [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: `Context:\n${context}\n\nQuestion: ${question}` }
-    ];
-
-    const answer = await callDeepSeek(messages, deepseekKey);
-
-    // 4. Save chat messages
+    // Save chat messages to database
     await supabase.from('chat_messages').insert([
       { user_id: userId, pdf_id: pdfId, sender: 'user', message: question },
       { user_id: userId, pdf_id: pdfId, sender: 'ai', message: answer }
@@ -71,49 +137,3 @@ serve(async (req) => {
     );
   }
 });
-
-async function getEmbedding(text: string, apiKey: string) {
-  const response = await fetch('https://api.deepseek.com/v1/embeddings', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      input: text,
-      model: 'deepseek-chat',
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`DeepSeek API error: ${error}`);
-  }
-
-  const data = await response.json();
-  return data.data[0].embedding;
-}
-
-async function callDeepSeek(messages: any[], apiKey: string) {
-  const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'deepseek-chat',
-      messages,
-      temperature: 0.2,
-      max_tokens: 800
-    })
-  });
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`DeepSeek API error: ${error}`);
-  }
-
-  const data = await response.json();
-  return data.choices[0].message.content;
-}

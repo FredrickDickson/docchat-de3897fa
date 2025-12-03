@@ -18,37 +18,40 @@ serve(async (req) => {
       throw new Error('Missing required fields: text, pdfId, userId');
     }
 
-    // Chunk text
-    const chunks = chunkText(text);
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
-    // Generate embeddings using DeepSeek
-    const deepseekKey = Deno.env.get('DEEPSEEK_API_KEY');
-    if (!deepseekKey) {
-      throw new Error('DEEPSEEK_API_KEY not set');
+    if (!supabaseUrl || !serviceRoleKey) {
+      throw new Error('SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set.');
     }
 
-    const embeddings = await Promise.all(
-      chunks.map(async (chunk, index) => {
-        const embedding = await getEmbedding(chunk, deepseekKey);
-        return {
-          user_id: userId,
-          pdf_id: pdfId,
-          page_number: 1, // Simplified for now, assuming single page or handled upstream
-          chunk_text: chunk,
-          embedding,
-        };
-      })
-    );
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Store in Supabase
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    // Chunk text for storage (useful for larger documents)
+    const chunks = chunkText(text);
+    
+    console.log(`Processing PDF ${pdfId} with ${chunks.length} chunks`);
 
-    const { error } = await supabase.from('pdf_chunks').insert(embeddings);
+    // Store chunks without embeddings (simpler approach)
+    const chunkRecords = chunks.map((chunk, index) => ({
+      user_id: userId,
+      pdf_id: pdfId,
+      page_number: index + 1,
+      chunk_text: chunk,
+    }));
 
-    if (error) throw error;
+    // Insert chunks in batches
+    const batchSize = 50;
+    for (let i = 0; i < chunkRecords.length; i += batchSize) {
+      const batch = chunkRecords.slice(i, i + batchSize);
+      const { error } = await supabase.from('pdf_chunks').insert(batch);
+      if (error) {
+        console.error('Error inserting chunks:', error);
+        throw error;
+      }
+    }
+
+    console.log(`Successfully processed ${chunks.length} chunks for PDF ${pdfId}`);
 
     return new Response(
       JSON.stringify({ success: true, chunksProcessed: chunks.length }),
@@ -65,37 +68,21 @@ serve(async (req) => {
   }
 });
 
-function chunkText(text: string, chunkSize = 1500, overlap = 200) {
-  const chunks = [];
+function chunkText(text: string, chunkSize = 2000, overlap = 200): string[] {
+  const chunks: string[] = [];
   let i = 0;
+  
   while (i < text.length) {
     const start = Math.max(0, i - overlap);
     const end = Math.min(text.length, i + chunkSize);
     const chunk = text.slice(start, end).trim();
-    if (chunk) chunks.push(chunk);
+    
+    if (chunk) {
+      chunks.push(chunk);
+    }
+    
     i += chunkSize - overlap;
   }
+  
   return chunks;
-}
-
-async function getEmbedding(text: string, apiKey: string) {
-  const response = await fetch('https://api.deepseek.com/v1/embeddings', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      input: text,
-      model: 'deepseek-chat', // DeepSeek uses the same model for embeddings
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`DeepSeek API error: ${error}`);
-  }
-
-  const data = await response.json();
-  return data.data[0].embedding;
 }
