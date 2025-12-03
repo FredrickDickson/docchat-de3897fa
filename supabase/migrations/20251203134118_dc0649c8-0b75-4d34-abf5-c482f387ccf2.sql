@@ -1,0 +1,83 @@
+-- Enable the pgvector extension for embeddings
+CREATE EXTENSION IF NOT EXISTS vector;
+
+-- Create table to store PDF chunks and their embeddings for RAG
+CREATE TABLE IF NOT EXISTS public.pdf_chunks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  pdf_id UUID NOT NULL,
+  page_number INT,
+  chunk_text TEXT NOT NULL,
+  embedding vector(1536),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+
+-- Create table to store chat messages
+CREATE TABLE IF NOT EXISTS public.chat_messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  pdf_id UUID NOT NULL,
+  sender TEXT NOT NULL CHECK (sender IN ('user', 'ai')),
+  message TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+
+-- Enable Row Level Security
+ALTER TABLE public.pdf_chunks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies for pdf_chunks
+CREATE POLICY "Users can view their own chunks"
+ON public.pdf_chunks FOR SELECT
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own chunks"
+ON public.pdf_chunks FOR INSERT
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own chunks"
+ON public.pdf_chunks FOR DELETE
+USING (auth.uid() = user_id);
+
+-- RLS Policies for chat_messages
+CREATE POLICY "Users can view their own chat messages"
+ON public.chat_messages FOR SELECT
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own chat messages"
+ON public.chat_messages FOR INSERT
+WITH CHECK (auth.uid() = user_id);
+
+-- Create indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_pdf_chunks_user_id ON public.pdf_chunks(user_id);
+CREATE INDEX IF NOT EXISTS idx_pdf_chunks_pdf_id ON public.pdf_chunks(pdf_id);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_user_id ON public.chat_messages(user_id);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_pdf_id ON public.chat_messages(pdf_id);
+
+-- Create a function to match chunks (similarity search)
+CREATE OR REPLACE FUNCTION match_chunks (
+  query_embedding vector(1536),
+  match_threshold float,
+  match_count int,
+  filter_user_id uuid
+)
+RETURNS TABLE (
+  id uuid,
+  chunk_text text,
+  similarity float
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    pdf_chunks.id,
+    pdf_chunks.chunk_text,
+    1 - (pdf_chunks.embedding <=> query_embedding) AS similarity
+  FROM pdf_chunks
+  WHERE 1 - (pdf_chunks.embedding <=> query_embedding) > match_threshold
+  AND pdf_chunks.user_id = filter_user_id
+  ORDER BY pdf_chunks.embedding <=> query_embedding
+  LIMIT match_count;
+END;
+$$;
