@@ -8,6 +8,7 @@ declare global {
     puter?: {
       ai?: {
         img2txt: (imageUrlOrDataURL: string) => Promise<string>;
+        chat: (prompt: string, options?: { stream?: boolean }) => Promise<string>;
       };
     };
   }
