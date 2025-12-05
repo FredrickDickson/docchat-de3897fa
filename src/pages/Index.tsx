@@ -6,6 +6,8 @@ import Features from "@/components/Features";
 import HowItWorks from "@/components/HowItWorks";
 import Pricing from "@/components/Pricing";
 import Footer from "@/components/Footer";
+import { Testimonials } from "@/components/landing/Testimonials";
+import { SampleSummaries } from "@/components/landing/SampleSummaries";
 
 const Index = () => {
   const [showChat, setShowChat] = useState(false);
@@ -20,7 +22,9 @@ const Index = () => {
         <>
           <Hero onGetStarted={() => setShowChat(true)} />
           <Features />
+          <SampleSummaries />
           <HowItWorks />
+          <Testimonials />
           <Pricing />
           <Footer />
         </>

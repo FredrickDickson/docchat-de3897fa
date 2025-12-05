@@ -240,8 +240,36 @@ export const summarizeWithAI = async (
 ): Promise<SummarizeResult> => {
   const { text, summaryType, domainFocus = 'general', provider } = options;
 
-  // Determine which provider to use (prefer DeepSeek for cost)
+  // Check if LangChain is enabled via environment variable
+  const useLangChain = import.meta.env.VITE_USE_LANGCHAIN !== 'false'; // Default to true
+
+  // If LangChain is enabled and DeepSeek key is available, use LangChain
   const deepseekKey = import.meta.env.VITE_DEEPSEEK_API_KEY;
+  
+  if (useLangChain && deepseekKey) {
+    try {
+      // Use LangChain service
+      const { processDocumentWithLangChain } = await import('./langchain');
+      
+      const result = await processDocumentWithLangChain({
+        text,
+        summaryType,
+        domainFocus,
+      });
+
+      return {
+        summary: result.summary,
+        tokensUsed: result.tokensUsed,
+        cost: result.cost,
+        provider: result.provider,
+      };
+    } catch (error) {
+      console.error('LangChain processing failed, falling back to direct API:', error);
+      // Fall through to direct API implementation below
+    }
+  }
+
+  // Original direct API implementation (fallback)
   const openaiKey = import.meta.env.VITE_OPENAI_API_KEY;
   const claudeKey = import.meta.env.VITE_CLAUDE_API_KEY;
   

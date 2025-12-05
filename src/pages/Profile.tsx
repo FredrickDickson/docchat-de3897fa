@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 
 interface Profile {
   id: string;
+  user_id: string;
   display_name: string | null;
   avatar_url: string | null;
 }
@@ -44,7 +45,7 @@ const Profile = () => {
     const { data, error } = await supabase
       .from("profiles")
       .select("*")
-      .eq("id", user?.id)
+      .eq("user_id", user?.id)  // Changed from 'id' to 'user_id'
       .single();
 
     if (error && error.code !== "PGRST116") {
@@ -58,6 +59,17 @@ const Profile = () => {
     if (data) {
       setProfile(data);
       setDisplayName(data.display_name || "");
+    } else if (error?.code === "PGRST116") {
+      // Profile doesn't exist, create it
+      const { data: newProfile, error: insertError } = await supabase
+        .from("profiles")
+        .insert({ user_id: user?.id, display_name: "" })
+        .select()
+        .single();
+
+      if (!insertError && newProfile) {
+        setProfile(newProfile);
+      }
     }
     setLoading(false);
   };
@@ -69,7 +81,7 @@ const Profile = () => {
     const { error } = await supabase
       .from("profiles")
       .update({ display_name: displayName })
-      .eq("id", user.id);
+      .eq("user_id", user.id);  // Changed from 'id' to 'user_id'
 
     if (error) {
       toast({
@@ -146,7 +158,7 @@ const Profile = () => {
     const { error: updateError } = await supabase
       .from("profiles")
       .update({ avatar_url: urlData.publicUrl })
-      .eq("id", user.id);
+      .eq("user_id", user.id);  // Changed from 'id' to 'user_id'
 
     if (updateError) {
       toast({

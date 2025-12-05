@@ -35,12 +35,11 @@ const Hero = ({ onGetStarted }: HeroProps) => {
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-serif leading-tight mb-6 animate-fade-up" style={{ animationDelay: "0.1s" }}>
             Chat with any
             <br />
-            <span className="text-primary">document.</span>
+            <span className="text-primary">PDF, Contract, or Report.</span>
           </h1>
           
           <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto animate-fade-up" style={{ animationDelay: "0.2s" }}>
-            Turn PDFs, presentations, and documents into interactive conversations. 
-            Ask questions, get summaries, and extract insights in seconds.
+            The AI-powered document assistant that summarizes legal contracts, analyzes financial reports, and extracts insights from academic papers in seconds.
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-up" style={{ animationDelay: "0.3s" }}>

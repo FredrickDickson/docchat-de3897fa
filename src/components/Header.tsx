@@ -1,7 +1,9 @@
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface HeaderProps {
@@ -10,6 +12,13 @@ interface HeaderProps {
 
 const Header = ({ showChat }: HeaderProps) => {
   const { user, loading } = useAuth();
+  const { profile } = useProfile();
+
+  const getDisplayName = () => {
+    if (profile?.display_name) return profile.display_name;
+    if (user?.email) return user.email.split('@')[0];
+    return 'User';
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
@@ -38,9 +47,25 @@ const Header = ({ showChat }: HeaderProps) => {
             <div className="flex items-center gap-3">
               <ThemeToggle />
               {!loading && user ? (
-                <Button variant="hero" size="sm" asChild>
-                  <Link to="/dashboard">Dashboard</Link>
-                </Button>
+                <div className="flex items-center gap-3">
+                  <Link 
+                    to="/profile" 
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-accent transition-colors"
+                  >
+                    <Avatar className="w-7 h-7">
+                      <AvatarImage src={profile?.avatar_url || undefined} alt={getDisplayName()} />
+                      <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                        {getDisplayName().charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="hidden sm:inline text-sm font-medium">
+                      {getDisplayName()}
+                    </span>
+                  </Link>
+                  <Button variant="hero" size="sm" asChild>
+                    <Link to="/dashboard">Dashboard</Link>
+                  </Button>
+                </div>
               ) : (
                 <>
                   <Button variant="ghost" size="sm" asChild>

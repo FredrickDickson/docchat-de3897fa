@@ -5,7 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Loader2, User, Bot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { streamChatWithDocument, isPuterAILoaded } from "@/lib/puterChat";
+import { chatWithDocument, isPuterAILoaded } from "@/lib/langchainChat";
 
 interface Message {
   id: string;
@@ -69,24 +69,6 @@ export const ChatInterface = ({ pdfId, userId }: ChatInterfaceProps) => {
   const handleSend = async () => {
     if (!input.trim()) return;
 
-    if (!isPuterAILoaded()) {
-      toast({
-        title: "AI Not Ready",
-        description: "Puter.js AI is loading. Please try again in a moment.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!documentText) {
-      toast({
-        title: "Document Not Ready",
-        description: "Document text is still loading. Please wait.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     const userMessage = input;
     setInput("");
     setIsLoading(true);
@@ -97,33 +79,34 @@ export const ChatInterface = ({ pdfId, userId }: ChatInterfaceProps) => {
     // Add user message
     setMessages(prev => [...prev, { id: userMsgId, sender: 'user', message: userMessage }]);
     
-    // Add empty AI message for streaming
+    // Add loading AI message
     setMessages(prev => [...prev, { id: aiMsgId, sender: 'ai', message: '' }]);
 
     try {
-      // Use streaming Puter.js AI for chat
-      await streamChatWithDocument(
-        userMessage, 
-        documentText, 
-        (chunk) => {
-          // Update the AI message with each streamed chunk
-          setMessages(prev => 
-            prev.map(msg => 
-              msg.id === aiMsgId 
-                ? { ...msg, message: msg.message + chunk }
-                : msg
-            )
-          );
-        },
-        'general'
+      // Use LangChain via edge function for chat
+      const response = await chatWithDocument(pdfId, userMessage, userId);
+      
+      // Update AI message with response
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.id === aiMsgId 
+            ? { ...msg, message: response }
+            : msg
+        )
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error('Chat error:', error);
-      // Remove the empty AI message on error
-      setMessages(prev => prev.filter(msg => msg.id !== aiMsgId));
+      // Update AI message with error
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.id === aiMsgId 
+            ? { ...msg, message: `Error: ${error.message || 'Failed to get response from AI'}` }
+            : msg
+        )
+      );
       toast({
         title: "Error",
-        description: "Failed to get response from AI. Please try again.",
+        description: error.message || "Failed to get response from AI. Please try again.",
         variant: "destructive",
       });
     } finally {

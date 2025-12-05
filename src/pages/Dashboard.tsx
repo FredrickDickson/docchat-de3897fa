@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import DocumentUpload from "@/components/DocumentUpload";
 import { PlanBadge } from "@/components/dashboard/PlanBadge";
+import { CreditsDashboardWidget } from "@/components/dashboard/CreditsDashboardWidget";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface DocumentRecord {
@@ -158,6 +159,11 @@ const Dashboard = () => {
             </p>
           </div>
 
+          {/* Credits Widget */}
+          <div className="mb-8">
+            <CreditsDashboardWidget />
+          </div>
+
           {/* Action Buttons */}
           <div className="mb-8 flex gap-3">
             <Button variant="hero" onClick={() => setShowUpload(true)}>
@@ -241,10 +247,10 @@ const Dashboard = () => {
                         <Button
                           variant="hero"
                           size="sm"
-                          onClick={() => navigate(`/chat/${doc.id}`)}
+                          onClick={() => navigate(`/document/${doc.id}`)}
                         >
                           <MessageSquare className="w-4 h-4 mr-2" />
-                          Chat
+                          Open
                         </Button>
                         <Button
                           variant="ghost"

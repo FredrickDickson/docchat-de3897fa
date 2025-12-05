@@ -3,33 +3,33 @@ import { FileText, MessageSquare, Download, Shield, Globe, Sparkles } from "luci
 const features = [
   {
     icon: MessageSquare,
-    title: "Natural conversations",
-    description: "Ask questions in plain English and get intelligent, context-aware answers instantly",
+    title: "Natural Conversations",
+    description: "Ask questions about your documents in plain English. Our AI understands context, nuance, and specific terminology for accurate answers.",
   },
   {
     icon: FileText,
-    title: "Any document format",
-    description: "PDFs, PowerPoints, Word docs—upload any document up to 100MB with ease",
+    title: "Universal Format Support",
+    description: "Upload PDFs, Word documents, PowerPoints, and text files. Perfect for legal contracts, financial statements, and research papers.",
   },
   {
     icon: Sparkles,
-    title: "Smart analysis",
-    description: "AI understands context, extracts key insights, and identifies important information",
+    title: "Instant Summaries",
+    description: "Get concise summaries of long documents instantly. Choose from brief overviews to detailed breakdowns of key points and arguments.",
   },
   {
     icon: Download,
-    title: "Export anywhere",
-    description: "Download summaries as TXT, or share insights directly to Slack and Notion",
+    title: "Export & Share",
+    description: "Download your summaries and chat history as TXT or PDF. Share insights directly with your team via Slack, Notion, or email.",
   },
   {
     icon: Shield,
-    title: "Secure & private",
-    description: "Your documents are encrypted and automatically deleted after processing",
+    title: "Enterprise-Grade Security",
+    description: "Your data is encrypted at rest and in transit. Documents are automatically processed and can be deleted immediately after use.",
   },
   {
     icon: Globe,
-    title: "40+ languages",
-    description: "Chat about documents in any language and get responses in your preferred one",
+    title: "Multi-Language Support",
+    description: "Upload documents in any language and chat in your preferred language. Break down language barriers in international business.",
   },
 ];
 

@@ -115,8 +115,8 @@ const PDFSummarizer = () => {
       setSummary(response.summary);
       setGenerationProgress(100);
 
-      // Save summary to database
-      const summaryData = {
+      // Save summary to database with LangChain metadata
+      const summaryData: any = {
         user_id: user.id,
         pdf_filename: 'uploaded.pdf', // TODO: Get actual filename from upload
         summary_text: response.summary,
@@ -125,6 +125,18 @@ const PDFSummarizer = () => {
         tokens_used: response.tokensUsed,
         cost_usd: response.cost,
       };
+
+      // Add LangChain-specific metadata if available
+      if ((response as any).chunkCount !== undefined) {
+        summaryData.chunk_count = (response as any).chunkCount;
+        summaryData.processing_method = 'langchain';
+        summaryData.langchain_metadata = (response as any).metadata || {
+          provider: (response as any).provider || 'deepseek',
+          model: 'deepseek-chat',
+        };
+      } else {
+        summaryData.processing_method = 'direct';
+      }
 
       const { data: insertedSummary, error: summaryError } = await supabase
         .from('summaries')

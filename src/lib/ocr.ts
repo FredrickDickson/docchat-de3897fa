@@ -1,52 +1,58 @@
 /**
- * Puter.js OCR Utility
- * Client-side OCR functionality using Puter.js (free, no API key required)
+ * LangChain OCR Utility
+ * OCR functionality using Supabase Edge Function with LangChain/Google Vision API
  */
 
-interface PuterStreamChunk {
-  text?: string;
-}
-
-declare global {
-  interface Window {
-    puter?: {
-      ai?: {
-        img2txt: (imageUrlOrDataURL: string) => Promise<string>;
-        chat: (prompt: string, options?: { stream?: boolean; model?: string }) => Promise<string | AsyncIterable<PuterStreamChunk>>;
-      };
-    };
-  }
-}
+import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Check if Puter.js is loaded
- */
-export const isPuterLoaded = (): boolean => {
-  return typeof window !== 'undefined' && 
-         typeof window.puter !== 'undefined' && 
-         typeof window.puter.ai !== 'undefined' &&
-         typeof window.puter.ai.img2txt === 'function';
-};
-
-/**
- * Extract text from an image using Puter.js OCR
- * @param imageUrlOrDataURL - Image URL or base64 data URL
+ * Extract text from an image using LangChain OCR via edge function
+ * @param imageDataURL - Base64 data URL of the image
+ * @param fileName - Optional file name for tracking
  * @returns Extracted text or empty string if failed
  */
 export const extractTextFromImage = async (
-  imageUrlOrDataURL: string
+  imageDataURL: string,
+  fileName?: string
 ): Promise<string> => {
-  if (!isPuterLoaded()) {
-    throw new Error('Puter.js is not loaded. Please ensure the script is included in your HTML.');
-  }
-
   try {
-    const text = await window.puter!.ai!.img2txt(imageUrlOrDataURL);
-    return text || '';
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User must be authenticated to use OCR');
+    }
+
+    const { data, error } = await supabase.functions.invoke('ocr-image', {
+      body: {
+        imageData: imageDataURL,
+        userId: user.id,
+        fileName: fileName || 'image'
+      }
+    });
+
+    if (error) {
+      if (error.message.includes('INSUFFICIENT_CREDITS')) {
+        throw new Error('Insufficient credits. OCR requires 2 credits per image.');
+      }
+      throw new Error(error.message || 'OCR failed');
+    }
+
+    if (!data || !data.text) {
+      throw new Error('No text extracted from image');
+    }
+
+    return data.text;
   } catch (error) {
     console.error('OCR error:', error);
     throw new Error(`OCR failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
+};
+
+/**
+ * Check if OCR is available (always true for edge function)
+ */
+export const isPuterLoaded = (): boolean => {
+  return true; // Always available via edge function
 };
 
 /**

@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
 
 export interface SubscriptionState {
-  plan: 'free' | 'pro';
+  plan: 'free' | 'basic' | 'pro' | 'elite';
   dailyUsage: number;
   usageResetAt: string | null;
   subscriptionEnd: string | null;
@@ -18,7 +18,7 @@ export interface SubscriptionState {
 export const useSubscription = (): SubscriptionState => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [plan, setPlan] = useState<'free' | 'pro'>('free');
+  const [plan, setPlan] = useState<'free' | 'basic' | 'pro' | 'elite'>('free');
   const [dailyUsage, setDailyUsage] = useState(0);
   const [usageResetAt, setUsageResetAt] = useState<string | null>(null);
   const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
@@ -36,7 +36,7 @@ export const useSubscription = (): SubscriptionState => {
       }
 
       if (data) {
-        setPlan(data.plan as 'free' | 'pro');
+        setPlan(data.plan as 'free' | 'basic' | 'pro' | 'elite');
         setSubscriptionEnd(data.subscription_end);
       }
     } catch (error) {
@@ -64,7 +64,7 @@ export const useSubscription = (): SubscriptionState => {
       if (error) throw error;
 
       if (data) {
-        setPlan(data.plan as 'free' | 'pro');
+        setPlan(data.plan as 'free' | 'basic' | 'pro' | 'elite');
         setDailyUsage(data.daily_usage || 0);
         setUsageResetAt(data.usage_reset_at);
       }

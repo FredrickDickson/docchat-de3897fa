@@ -65,49 +65,13 @@ const Pricing = () => {
   const [isLoading, setIsLoading] = useState<string | null>(null);
 
   const handlePlanClick = async (action: string) => {
-    if (action === "free") {
-      if (user) {
-        navigate("/dashboard");
-      } else {
-        navigate("/auth");
-      }
+    if (!user) {
+      navigate("/auth");
       return;
     }
 
-    if (action === "pro") {
-      if (!user) {
-        navigate("/auth");
-        return;
-      }
-
-      setIsLoading("pro");
-      try {
-        const { data, error } = await supabase.functions.invoke('create-checkout');
-        
-        if (error) throw error;
-        
-        if (data?.url) {
-          window.open(data.url, '_blank');
-        }
-      } catch (error) {
-        console.error('Error creating checkout session:', error);
-        toast({
-          title: "Error",
-          description: "Could not initiate checkout. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(null);
-      }
-      return;
-    }
-
-    if (action === "credits") {
-      toast({
-        title: "Coming soon",
-        description: "Credit purchases will be available soon.",
-      });
-    }
+    // Navigate to pricing page for all plans
+    navigate("/pricing");
   };
 
   return (
@@ -170,7 +134,7 @@ const Pricing = () => {
         </div>
 
         <p className="text-center text-sm text-muted-foreground mt-8">
-          All plans include secure document processing and 24/7 support
+          All plans include monthly credits that reset. Buy extra credits anytime for $3-$30.
         </p>
       </div>
     </section>
