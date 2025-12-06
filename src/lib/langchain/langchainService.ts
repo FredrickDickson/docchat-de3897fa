@@ -38,23 +38,32 @@ export interface LangChainSummarizeResult {
  */
 export const createDeepSeekLLM = (temperature: number = 0.7): ChatOpenAI => {
   const apiKey = import.meta.env.VITE_DEEPSEEK_API_KEY;
-  
+
   if (!apiKey) {
-    throw new Error('VITE_DEEPSEEK_API_KEY not configured');
+    console.error('LangChain Error: VITE_DEEPSEEK_API_KEY not configured');
+    throw new Error('VITE_DEEPSEEK_API_KEY not configured. Please add it to your .env file.');
   }
 
-  return new ChatOpenAI({
-    modelName: 'deepseek-chat',
-    temperature,
-    openAIApiKey: apiKey,
-    configuration: {
-      baseURL: 'https://api.deepseek.com/v1',
-    },
-    // Enable streaming for future use
-    streaming: false,
-    // Callbacks for token counting
-    callbacks: [],
-  });
+  try {
+    console.log('Creating DeepSeek LLM instance via LangChain...');
+
+    return new ChatOpenAI({
+      modelName: 'deepseek-chat',
+      temperature,
+      openAIApiKey: apiKey,
+      configuration: {
+        baseURL: 'https://api.deepseek.com/v1',
+      },
+      // Disable streaming for browser compatibility
+      streaming: false,
+      // Add retry configuration
+      maxRetries: 2,
+      timeout: 60000, // 60 second timeout
+    });
+  } catch (error) {
+    console.error('Failed to create DeepSeek LLM instance:', error);
+    throw new Error(`Failed to initialize LangChain: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 };
 
 /**
@@ -175,63 +184,98 @@ export const processDocumentWithLangChain = async (
 ): Promise<LangChainSummarizeResult> => {
   const { text, summaryType, domainFocus = 'general' } = options;
 
-  // Create LLM instance
-  const llm = createDeepSeekLLM();
+  console.log(`[LangChain] Starting document processing with ${summaryType} summary type`);
 
-  // Build prompt template
-  const promptTemplate = buildPromptTemplate(summaryType, domainFocus);
+  try {
+    // Create LLM instance
+    const llm = createDeepSeekLLM();
+    console.log('[LangChain] LLM instance created successfully');
 
-  // For very long texts, split into chunks
-  let processedText = text;
-  let chunkCount = 1;
+    // Build prompt template
+    const promptTemplate = buildPromptTemplate(summaryType, domainFocus);
 
-  if (text.length > 50000) {
-    const textSplitter = createTextSplitter(summaryType);
-    const chunks = await textSplitter.splitText(text);
-    chunkCount = chunks.length;
+    // For very long texts, split into chunks
+    let processedText = text;
+    let chunkCount = 1;
 
-    // For now, take first chunk or combine chunks intelligently
-    // In future, implement map-reduce for multi-chunk summarization
-    if (chunks.length > 1) {
-      // Take first 50k characters from combined chunks
-      processedText = chunks.slice(0, 3).join('\n\n').substring(0, 50000);
-    } else {
-      processedText = chunks[0];
+    if (text.length > 50000) {
+      console.log(`[LangChain] Text is long (${text.length} chars), splitting into chunks...`);
+      const textSplitter = createTextSplitter(summaryType);
+      const chunks = await textSplitter.splitText(text);
+      chunkCount = chunks.length;
+      console.log(`[LangChain] Split into ${chunkCount} chunks`);
+
+      // For now, take first chunk or combine chunks intelligently
+      // In future, implement map-reduce for multi-chunk summarization
+      if (chunks.length > 1) {
+        // Take first 50k characters from combined chunks
+        processedText = chunks.slice(0, 3).join('\n\n').substring(0, 50000);
+        console.log(`[LangChain] Using first 3 chunks (${processedText.length} chars)`);
+      } else {
+        processedText = chunks[0];
+      }
     }
+
+    // Estimate input tokens
+    const inputTokens = estimateTokens(processedText);
+    console.log(`[LangChain] Estimated input tokens: ${inputTokens}`);
+
+    // Format the prompt
+    const formattedPrompt = await promptTemplate.format({
+      text: processedText,
+    });
+
+    console.log('[LangChain] Invoking LLM...');
+
+    // Run the LLM directly
+    let result;
+    try {
+      result = await llm.invoke(formattedPrompt);
+      console.log('[LangChain] LLM invocation successful');
+    } catch (invokeError) {
+      console.error('[LangChain] LLM invocation failed:', invokeError);
+      throw new Error(`LLM invocation failed: ${invokeError instanceof Error ? invokeError.message : 'Unknown error'}`);
+    }
+
+    const summary = typeof result.content === 'string' ? result.content : String(result.content);
+
+    // Estimate output tokens
+    const outputTokens = estimateTokens(summary);
+    console.log(`[LangChain] Estimated output tokens: ${outputTokens}`);
+
+    // Calculate cost
+    const cost = calculateDeepSeekCost(inputTokens, outputTokens);
+    console.log(`[LangChain] Estimated cost: $${cost.toFixed(6)}`);
+
+    return {
+      summary,
+      tokensUsed: inputTokens + outputTokens,
+      cost,
+      chunkCount,
+      provider: 'deepseek',
+      metadata: {
+        model: 'deepseek-chat',
+        inputTokens,
+        outputTokens,
+        processingMethod: 'langchain',
+      },
+    };
+  } catch (error) {
+    console.error('[LangChain] Document processing failed:', error);
+
+    // Provide detailed error information
+    if (error instanceof Error) {
+      if (error.message.includes('API key')) {
+        throw new Error('DeepSeek API key is not configured or invalid. Please check your .env file.');
+      } else if (error.message.includes('network') || error.message.includes('fetch')) {
+        throw new Error('Network error while connecting to DeepSeek API. Please check your internet connection.');
+      } else if (error.message.includes('rate limit')) {
+        throw new Error('DeepSeek API rate limit exceeded. Please try again later.');
+      }
+    }
+
+    throw new Error(`LangChain processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
-
-  // Estimate input tokens
-  const inputTokens = estimateTokens(processedText);
-
-  // Format the prompt
-  const formattedPrompt = await promptTemplate.format({
-    text: processedText,
-  });
-
-  // Run the LLM directly
-  const result = await llm.invoke(formattedPrompt);
-
-  const summary = typeof result.content === 'string' ? result.content : String(result.content);
-
-  // Estimate output tokens
-  const outputTokens = estimateTokens(summary);
-
-  // Calculate cost
-  const cost = calculateDeepSeekCost(inputTokens, outputTokens);
-
-  return {
-    summary,
-    tokensUsed: inputTokens + outputTokens,
-    cost,
-    chunkCount,
-    provider: 'deepseek',
-    metadata: {
-      model: 'deepseek-chat',
-      inputTokens,
-      outputTokens,
-      processingMethod: 'langchain',
-    },
-  };
 };
 
 /**

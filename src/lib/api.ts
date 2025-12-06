@@ -30,8 +30,10 @@ export const summarizeText = async (
   // Check if we have API keys for client-side processing
   const hasOpenAIKey = !!import.meta.env.VITE_OPENAI_API_KEY;
   const hasClaudeKey = !!import.meta.env.VITE_CLAUDE_API_KEY;
+  const hasDeepSeekKey = !!import.meta.env.VITE_DEEPSEEK_API_KEY;
+  const useLangChain = import.meta.env.VITE_USE_LANGCHAIN === 'true';
 
-  if (hasOpenAIKey || hasClaudeKey) {
+  if (hasOpenAIKey || hasClaudeKey || (hasDeepSeekKey && useLangChain)) {
     // Use client-side AI client
     const { summarizeWithAI } = await import('./aiClient');
     const { formatSummary } = await import('./summaryFormatter');

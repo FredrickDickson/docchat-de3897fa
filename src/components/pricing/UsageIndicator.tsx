@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 interface UsageIndicatorProps {
   usage: number;
   limit: number;
-  plan: 'free' | 'pro';
+  plan: 'free' | 'basic' | 'pro' | 'elite';
 }
 
 export const UsageIndicator = ({ usage, limit, plan }: UsageIndicatorProps) => {

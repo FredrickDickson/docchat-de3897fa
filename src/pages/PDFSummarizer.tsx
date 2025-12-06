@@ -14,7 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import PDFUpload from "@/components/PDFUpload";
 import SummaryHistory from "@/components/SummaryHistory";
-import { summarizeText, SummarizeRequest } from "@/lib/api";
+// Removed broken client-side API - using edge functions instead
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { exportAsTXT, exportAsJSON, exportAsCSV, copyToClipboard } from "@/lib/exportUtils";
@@ -28,7 +28,7 @@ const PDFSummarizer = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isOverLimit, dailyUsage, plan, incrementUsage } = useSubscription();
-  
+
   const [extractedText, setExtractedText] = useState<string>("");
   const [summary, setSummary] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -42,7 +42,7 @@ const PDFSummarizer = () => {
     setExtractedText(text);
     // Use a temporary ID if fileId is not provided or valid UUID, but ideally we get a real ID
     // For now, we'll use a generated ID if fileId is empty, but in real app we'd save PDF first
-    const pdfId = fileId || crypto.randomUUID(); 
+    const pdfId = fileId || crypto.randomUUID();
     setCurrentPdfId(pdfId);
 
     toast({
@@ -60,9 +60,9 @@ const PDFSummarizer = () => {
             userId: user.id
           }
         });
-        
+
         if (error) throw error;
-        
+
         toast({
           title: "Ready for Chat",
           description: "You can now ask questions about this PDF.",
@@ -79,7 +79,14 @@ const PDFSummarizer = () => {
   };
 
   const handleGenerateSummary = async () => {
-    if (!extractedText || !user) return;
+    if (!extractedText || !user || !currentPdfId) {
+      toast({
+        title: "Cannot generate summary",
+        description: !extractedText ? "Please upload a PDF first" : !currentPdfId ? "PDF not processed yet" : "Not authenticated",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsGenerating(true);
     setGenerationProgress(0);
@@ -103,14 +110,32 @@ const PDFSummarizer = () => {
         return;
       }
 
-      // Generate summary
-      const request: SummarizeRequest = {
-        text: extractedText,
-        summaryType,
-        domainFocus,
-      };
+      // Map summary types to edge function format
+      const edgeFunctionSummaryType = summaryType === 'short' ? 'brief' :
+        summaryType === 'detailed' ? 'detailed' :
+          'standard';
 
-      const response = await summarizeText(request);
+      // Call edge function for summarization (server-side, no CORS issues)
+      const { data, error: summaryError } = await supabase.functions.invoke('summarize-pdf', {
+        body: {
+          documentId: currentPdfId,
+          userId: user.id,
+          summaryType: edgeFunctionSummaryType
+        }
+      });
+
+      if (summaryError) {
+        // Check for specific error codes
+        if (summaryError.context?.status === 402) {
+          throw new Error('Insufficient credits. Please run the SQL script to add credits (see add_credits.sql in artifacts).');
+        }
+        if (summaryError.message?.includes('INSUFFICIENT_CREDITS')) {
+          throw new Error('Insufficient credits. Please run the SQL script to add credits (see add_credits.sql in artifacts).');
+        }
+        throw new Error(`Summarization failed: ${summaryError.message || 'Unknown error'}`);
+      }
+
+      const response = { summary: data.summary, tokensUsed: 0, cost: data.creditsUsed, processingTime: 0 };
 
       setSummary(response.summary);
       setGenerationProgress(100);
@@ -138,7 +163,7 @@ const PDFSummarizer = () => {
         summaryData.processing_method = 'direct';
       }
 
-      const { data: insertedSummary, error: summaryError } = await supabase
+      const { data: insertedSummary, error: insertError } = await supabase
         .from('summaries')
         .insert(summaryData)
         .select()
@@ -152,8 +177,8 @@ const PDFSummarizer = () => {
         });
       }
 
-      if (summaryError) {
-        console.error('Error saving summary:', summaryError);
+      if (insertError) {
+        console.error('Error saving summary:', insertError);
       }
 
       // Log usage - skip if table doesn't exist (not critical)
@@ -251,143 +276,143 @@ const PDFSummarizer = () => {
                 <UsageIndicator usage={dailyUsage} limit={3} plan={plan} />
                 {/* Upload Section */}
                 {!extractedText && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Upload PDF</CardTitle>
-                  <CardDescription>
-                    Upload a PDF file to generate an AI-powered summary
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <PDFUpload onUploadComplete={handleUploadComplete} />
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Summary Configuration */}
-            {extractedText && !summary && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Configure Summary</CardTitle>
-                  <CardDescription>
-                    Choose summary length and domain focus
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Summary Length</label>
-                    <Select
-                      value={summaryType}
-                      onValueChange={(value: any) => setSummaryType(value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="short">Short (100 words)</SelectItem>
-                        <SelectItem value="medium">Medium (150-200 words)</SelectItem>
-                        <SelectItem value="detailed">Detailed (300-400 words)</SelectItem>
-                        <SelectItem value="bullets">Bullet Points</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Domain Focus</label>
-                    <Select
-                      value={domainFocus}
-                      onValueChange={(value: any) => setDomainFocus(value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="general">General</SelectItem>
-                        <SelectItem value="legal">Legal</SelectItem>
-                        <SelectItem value="finance">Finance</SelectItem>
-                        <SelectItem value="academic">Academic</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {isGenerating && (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Generating summary...</span>
-                        <span className="font-medium">{generationProgress}%</span>
-                      </div>
-                      <Progress value={generationProgress} className="h-2" />
-                    </div>
-                  )}
-
-                  <Button
-                    variant="hero"
-                    onClick={handleGenerateSummary}
-                    disabled={isGenerating}
-                    className="w-full"
-                  >
-                    {isGenerating ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Generating Summary...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        Generate Summary
-                      </>
-                    )}
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Summary Result */}
-            {summary && (
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle>Summary</CardTitle>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Upload PDF</CardTitle>
                       <CardDescription>
-                        {summaryType} summary • {domainFocus} focus
+                        Upload a PDF file to generate an AI-powered summary
                       </CardDescription>
-                    </div>
-                    <div className="flex gap-2 flex-wrap">
-                      <Button variant="outline" size="icon" onClick={handleCopySummary} title="Copy to clipboard">
-                        <Copy className="w-4 h-4" />
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleDownloadSummary('txt')}>
-                        <Download className="w-4 h-4 mr-2" />
-                        TXT
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleDownloadSummary('json')}>
-                        <Download className="w-4 h-4 mr-2" />
-                        JSON
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleDownloadSummary('csv')}>
-                        <Download className="w-4 h-4 mr-2" />
-                        CSV
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => navigate('/integrations')}
-                        title="Export to integrations"
+                    </CardHeader>
+                    <CardContent>
+                      <PDFUpload onUploadComplete={handleUploadComplete} />
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Summary Configuration */}
+                {extractedText && !summary && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Configure Summary</CardTitle>
+                      <CardDescription>
+                        Choose summary length and domain focus
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Summary Length</label>
+                        <Select
+                          value={summaryType}
+                          onValueChange={(value: any) => setSummaryType(value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="short">Short (100 words)</SelectItem>
+                            <SelectItem value="medium">Medium (150-200 words)</SelectItem>
+                            <SelectItem value="detailed">Detailed (300-400 words)</SelectItem>
+                            <SelectItem value="bullets">Bullet Points</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Domain Focus</label>
+                        <Select
+                          value={domainFocus}
+                          onValueChange={(value: any) => setDomainFocus(value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="general">General</SelectItem>
+                            <SelectItem value="legal">Legal</SelectItem>
+                            <SelectItem value="finance">Finance</SelectItem>
+                            <SelectItem value="academic">Academic</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {isGenerating && (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">Generating summary...</span>
+                            <span className="font-medium">{generationProgress}%</span>
+                          </div>
+                          <Progress value={generationProgress} className="h-2" />
+                        </div>
+                      )}
+
+                      <Button
+                        variant="hero"
+                        onClick={handleGenerateSummary}
+                        disabled={isGenerating}
+                        className="w-full"
                       >
-                        <ExternalLink className="w-4 h-4 mr-2" />
-                        Export
+                        {isGenerating ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Generating Summary...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            Generate Summary
+                          </>
+                        )}
                       </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="prose dark:prose-invert max-w-none">
-                    <p className="whitespace-pre-wrap">{summary}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Summary Result */}
+                {summary && (
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle>Summary</CardTitle>
+                          <CardDescription>
+                            {summaryType} summary • {domainFocus} focus
+                          </CardDescription>
+                        </div>
+                        <div className="flex gap-2 flex-wrap">
+                          <Button variant="outline" size="icon" onClick={handleCopySummary} title="Copy to clipboard">
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => handleDownloadSummary('txt')}>
+                            <Download className="w-4 h-4 mr-2" />
+                            TXT
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => handleDownloadSummary('json')}>
+                            <Download className="w-4 h-4 mr-2" />
+                            JSON
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => handleDownloadSummary('csv')}>
+                            <Download className="w-4 h-4 mr-2" />
+                            CSV
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate('/integrations')}
+                            title="Export to integrations"
+                          >
+                            <ExternalLink className="w-4 h-4 mr-2" />
+                            Export
+                          </Button>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="prose dark:prose-invert max-w-none">
+                        <p className="whitespace-pre-wrap">{summary}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </TabsContent>
 
               <TabsContent value="chat">

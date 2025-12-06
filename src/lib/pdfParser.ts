@@ -4,11 +4,11 @@
  */
 
 import * as pdfjsLib from 'pdfjs-dist';
+import pdfWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
 
 // Set worker source for PDF.js
 if (typeof window !== 'undefined') {
-  // Use CDN for worker, or you can copy pdf.worker.min.js to public folder
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 }
 
 export interface PDFMetadata {
@@ -38,26 +38,26 @@ export const extractTextFromPDF = async (
 ): Promise<PDFPageText[]> => {
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  
+
   const pages: PDFPageText[] = [];
-  
+
   for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
     const page = await pdf.getPage(pageNum);
     const textContent = await page.getTextContent();
-    
+
     // Combine all text items
     const text = textContent.items
       .map((item: any) => item.str)
       .join(' ')
       .trim();
-    
+
     pages.push({
       pageNumber: pageNum,
       text,
       hasText: text.length > 0,
     });
   }
-  
+
   return pages;
 };
 
@@ -69,6 +69,7 @@ interface PDFInfo {
   Producer?: string;
   CreationDate?: string;
   ModDate?: string;
+  numPages: number;
 }
 
 /**
@@ -83,7 +84,7 @@ export const getPDFMetadata = async (
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   const metadata = await pdf.getMetadata();
   const info = metadata.info as PDFInfo | undefined;
-  
+
   return {
     title: info?.Title,
     author: info?.Author,
@@ -107,11 +108,11 @@ export const isScannedPDF = async (
   threshold: number = 50
 ): Promise<boolean> => {
   const pages = await extractTextFromPDF(file);
-  
+
   // Check if most pages have minimal text
   const pagesWithText = pages.filter(page => page.text.length >= threshold).length;
   const textRatio = pagesWithText / pages.length;
-  
+
   // If less than 30% of pages have meaningful text, consider it scanned
   return textRatio < 0.3;
 };
@@ -125,4 +126,3 @@ export const extractAllText = async (file: File): Promise<string> => {
   const pages = await extractTextFromPDF(file);
   return pages.map(page => page.text).join('\n\n');
 };
-
