@@ -17,43 +17,25 @@ export const useCredits = () => {
     try {
       setIsLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user) {
         throw new Error('Not authenticated');
       }
 
-      // Fetch credits from credits table
-      const { data: creditsData, error: creditsError } = await supabase
-        .from('credits')
-        .select('credits')
-        .eq('user_id', user.id)
+      // Fetch credits from users table (hybrid credits system)
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('monthly_credits, extra_credits, plan, subscription_renews_at')
+        .eq('id', user.id)
         .single();
 
-      if (creditsError && creditsError.code !== 'PGRST116') throw creditsError;
-
-      // Fetch plan info from profiles
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('plan')
-        .eq('user_id', user.id)
-        .single();
-
-      if (profileError && profileError.code !== 'PGRST116') throw profileError;
-
-      // Fetch subscription info
-      const { data: subData, error: subError } = await supabase
-        .from('subscriptions')
-        .select('current_period_end')
-        .eq('user_id', user.id)
-        .single();
-
-      if (subError && subError.code !== 'PGRST116') throw subError;
+      if (userError && userError.code !== 'PGRST116') throw userError;
 
       setCredits({
-        monthlyCredits: creditsData?.credits || 0,
-        extraCredits: 0, // Can be calculated separately if needed
-        plan: profileData?.plan || 'free',
-        subscriptionRenewsAt: subData?.current_period_end || null
+        monthlyCredits: userData?.monthly_credits || 0,
+        extraCredits: userData?.extra_credits || 0,
+        plan: userData?.plan || 'free',
+        subscriptionRenewsAt: userData?.subscription_renews_at || null
       });
     } catch (err) {
       setError(err as Error);

@@ -115,7 +115,6 @@ const PDFSummarizer = () => {
         summaryType === 'detailed' ? 'detailed' :
           'standard';
 
-      // Call edge function for summarization (server-side, no CORS issues)
       const { data, error: summaryError } = await supabase.functions.invoke('summarize-pdf', {
         body: {
           documentId: currentPdfId,
@@ -125,64 +124,46 @@ const PDFSummarizer = () => {
       });
 
       if (summaryError) {
-        // Check for specific error codes
-        if (summaryError.context?.status === 402) {
-          throw new Error('Insufficient credits. Please run the SQL script to add credits (see add_credits.sql in artifacts).');
-        }
-        if (summaryError.message?.includes('INSUFFICIENT_CREDITS')) {
-          throw new Error('Insufficient credits. Please run the SQL script to add credits (see add_credits.sql in artifacts).');
-        }
         throw new Error(`Summarization failed: ${summaryError.message || 'Unknown error'}`);
       }
+
+      // Check for application-level error returned with 200 status
+      if (data?.error) {
+        if (data.logs) {
+          console.groupCollapsed('Edge Function Logs (Error)');
+          data.logs.forEach((log: string) => console.log(log));
+          console.groupEnd();
+        }
+
+        if (data.error === 'INSUFFICIENT_CREDITS') {
+          throw new Error('Insufficient credits. Please add credits to continue.');
+        }
+        throw new Error(`Summarization failed: ${data.error}`);
+      }
+
+      // Log success logs if available
+      if (data?.logs) {
+        console.groupCollapsed('Edge Function Logs (Success)');
+        data.logs.forEach((log: string) => console.log(log));
+        console.groupEnd();
+      }
+
 
       const response = { summary: data.summary, tokensUsed: 0, cost: data.creditsUsed, processingTime: 0 };
 
       setSummary(response.summary);
       setGenerationProgress(100);
 
-      // Save summary to database with LangChain metadata
-      const summaryData: any = {
-        user_id: user.id,
-        pdf_filename: 'uploaded.pdf', // TODO: Get actual filename from upload
+      // Store basic summary data for export functionality
+      setCurrentSummaryData({
+        pdf_filename: data.documentName || 'uploaded.pdf',
         summary_text: response.summary,
         summary_type: summaryType,
         domain_focus: domainFocus,
-        tokens_used: response.tokensUsed,
         cost_usd: response.cost,
-      };
-
-      // Add LangChain-specific metadata if available
-      if ((response as any).chunkCount !== undefined) {
-        summaryData.chunk_count = (response as any).chunkCount;
-        summaryData.processing_method = 'langchain';
-        summaryData.langchain_metadata = (response as any).metadata || {
-          provider: (response as any).provider || 'deepseek',
-          model: 'deepseek-chat',
-        };
-      } else {
-        summaryData.processing_method = 'direct';
-      }
-
-      const { data: insertedSummary, error: insertError } = await supabase
-        .from('summaries')
-        .insert(summaryData)
-        .select()
-        .single();
-
-      if (insertedSummary) {
-        setCurrentSummaryData({
-          ...summaryData,
-          id: insertedSummary.id,
-          created_at: insertedSummary.created_at,
-        });
-      }
-
-      if (insertError) {
-        console.error('Error saving summary:', insertError);
-      }
-
-      // Log usage - skip if table doesn't exist (not critical)
-      // Usage is tracked via incrementUsage() below
+        created_at: new Date().toISOString(),
+        tokens_used: response.tokensUsed,
+      });
 
       // Increment daily usage counter
       await incrementUsage();
@@ -192,8 +173,9 @@ const PDFSummarizer = () => {
 
       toast({
         title: "Summary generated",
-        description: `Generated ${summaryType} summary in ${(response.processingTime / 1000).toFixed(1)}s`,
+        description: `Generated ${summaryType} summary successfully`,
       });
+
     } catch (error: any) {
       clearInterval(progressInterval);
       setGenerationProgress(0);

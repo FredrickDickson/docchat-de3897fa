@@ -11,134 +11,49 @@ import { Loader2, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/hooks/useAuth"; // Ensure this import exists
 
 const Pricing = () => {
-  const { plan, isLoading: subscriptionLoading } = useSubscription();
-  const { credits, isLoading: creditsLoading } = useCredits();
+  const { plan, isLoading: subscriptionLoading, refreshSubscription } = useSubscription();
+  const { credits, isLoading: creditsLoading, refetch: refetchCredits } = useCredits();
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth(); // Assume useAuth provides user object
 
-  const handleSubscription = async (selectedPlan: string, interval: string, amount: number) => {
+  // Get Public Key from env
+  const publicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || '';
+
+  const handlePaymentSuccess = async (reference: any) => {
+    console.log('Payment success:', reference);
     setIsCheckoutLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error('You must be logged in to upgrade');
-      }
+      // Verify on backend
+      // Paystack returns object with 'reference' or 'message' field depending on context.
+      // Usually 'reference' object: { message: "Approved", reference: "...", status: "success", trans: "..." }
+      const refString = reference.reference;
 
-      const reference = `SUB_${Date.now()}_${user.id.substring(0, 8)}`;
-      
-      const { data, error } = await supabase.functions.invoke('paystack-initialize', {
-        body: {
-          email: user.email,
-          amount: amount * 100, // Convert to cents
-          plan: selectedPlan,
-          interval,
-          reference,
-        },
+      const { data, error } = await supabase.functions.invoke('paystack-verify', {
+        body: { reference: refString }
       });
-      
-      if (error) {
-        console.error('Paystack initialize error:', error);
-        // Try to extract error message from response
-        let errorMsg = error.message || 'Failed to initialize payment';
-        if (error.context?.body) {
-          try {
-            const errorBody = typeof error.context.body === 'string' 
-              ? JSON.parse(error.context.body) 
-              : error.context.body;
-            errorMsg = errorBody.error || errorBody.message || errorMsg;
-          } catch (e) {
-            // Ignore parsing errors
-          }
-        }
-        throw new Error(errorMsg);
-      }
-      
-      if (!data) {
-        throw new Error('No response from payment service');
-      }
-      
-      if (data.error) {
-        const errorMsg = typeof data.error === 'string' ? data.error : data.error.message || 'Payment initialization failed';
-        throw new Error(errorMsg);
-      }
-      
-      if (data?.data?.authorization_url) {
-        window.location.href = data.data.authorization_url;
-      } else {
-        throw new Error('No authorization URL received from payment service');
-      }
-    } catch (error: any) {
-      console.error('Error creating checkout session:', error);
-      const errorMessage = error?.message || error?.error?.message || 'Could not initiate checkout. Please try again.';
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
       toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
+        title: "Payment Successful",
+        description: "Your transaction has been verified.",
       });
-    } finally {
-      setIsCheckoutLoading(false);
-    }
-  };
 
-  const handleCreditPurchase = async (creditAmount: number, price: number) => {
-    setIsCheckoutLoading(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error('You must be logged in to purchase credits');
-      }
+      // Refresh state
+      await refreshSubscription();
+      await refetchCredits();
 
-      const reference = `CREDIT_${Date.now()}_${user.id.substring(0, 8)}`;
-      
-      const { data, error } = await supabase.functions.invoke('paystack-initialize', {
-        body: {
-          email: user.email,
-          amount: price * 100, // Convert to cents
-          credits: creditAmount,
-          reference,
-        },
-      });
-      
-      if (error) {
-        console.error('Paystack initialize error:', error);
-        // Try to extract error message from response
-        let errorMsg = error.message || 'Failed to initialize payment';
-        if (error.context?.body) {
-          try {
-            const errorBody = typeof error.context.body === 'string' 
-              ? JSON.parse(error.context.body) 
-              : error.context.body;
-            errorMsg = errorBody.error || errorBody.message || errorMsg;
-          } catch (e) {
-            // Ignore parsing errors
-          }
-        }
-        throw new Error(errorMsg);
-      }
-      
-      if (!data) {
-        throw new Error('No response from payment service');
-      }
-      
-      if (data.error) {
-        const errorMsg = typeof data.error === 'string' ? data.error : data.error.message || 'Payment initialization failed';
-        throw new Error(errorMsg);
-      }
-      
-      if (data?.data?.authorization_url) {
-        window.location.href = data.data.authorization_url;
-      } else {
-        throw new Error('No authorization URL received from payment service');
-      }
     } catch (error: any) {
-      console.error('Error purchasing credits:', error);
-      const errorMessage = error?.message || error?.error?.message || 'Could not initiate credit purchase. Please try again.';
+      console.error('Verification error:', error);
       toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
+        title: "Verification Failed",
+        description: "Payment was successful but verification failed. Please contact support.",
+        variant: "destructive"
       });
     } finally {
       setIsCheckoutLoading(false);
@@ -151,6 +66,10 @@ const Pricing = () => {
         <Loader2 className="w-6 h-6 animate-spin text-primary" />
       </div>
     );
+  }
+
+  if (!publicKey) {
+    console.warn('VITE_PAYSTACK_PUBLIC_KEY is likely missing. Please set it in your .env file.');
   }
 
   return (
@@ -198,7 +117,8 @@ const Pricing = () => {
             <div className="grid gap-8 lg:grid-cols-3 lg:gap-12 max-w-6xl mx-auto">
               <PricingCard
                 title="Basic"
-                price="$7"
+                price="GHS 105"
+                amount={105}
                 description="Perfect for students and light users"
                 features={[
                   "200 credits per month",
@@ -209,12 +129,15 @@ const Pricing = () => {
                   "Email support"
                 ]}
                 isCurrent={plan === 'basic'}
-                onUpgrade={() => handleSubscription('basic', 'monthly', 7)}
-                isLoading={isCheckoutLoading}
+                onSuccess={handlePaymentSuccess}
+                email={user?.email || ''}
+                publicKey={publicKey}
+                userId={user?.id || ''}
               />
               <PricingCard
                 title="Pro"
-                price="$15"
+                price="GHS 225"
+                amount={225}
                 description="For professionals and researchers"
                 features={[
                   "600 credits per month",
@@ -227,12 +150,15 @@ const Pricing = () => {
                 ]}
                 isCurrent={plan === 'pro'}
                 isPopular
-                onUpgrade={() => handleSubscription('pro', 'monthly', 15)}
-                isLoading={isCheckoutLoading}
+                onSuccess={handlePaymentSuccess}
+                email={user?.email || ''}
+                publicKey={publicKey}
+                userId={user?.id || ''}
               />
               <PricingCard
                 title="Elite"
-                price="$29"
+                price="GHS 435"
+                amount={435}
                 description="For teams and heavy users"
                 features={[
                   "1500 credits per month",
@@ -245,8 +171,10 @@ const Pricing = () => {
                   "API access"
                 ]}
                 isCurrent={plan === 'elite'}
-                onUpgrade={() => handleSubscription('elite', 'monthly', 29)}
-                isLoading={isCheckoutLoading}
+                onSuccess={handlePaymentSuccess}
+                email={user?.email || ''}
+                publicKey={publicKey}
+                userId={user?.id || ''}
               />
             </div>
           </TabsContent>
@@ -256,31 +184,39 @@ const Pricing = () => {
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4 max-w-6xl mx-auto">
               <CreditPackCard
                 credits={100}
-                price={3}
-                onPurchase={() => handleCreditPurchase(100, 3)}
-                isLoading={isCheckoutLoading}
+                price={45}
+                onSuccess={handlePaymentSuccess}
+                email={user?.email || ''}
+                publicKey={publicKey}
+                userId={user?.id || ''}
               />
               <CreditPackCard
                 credits={300}
-                price={8}
+                price={120}
                 isPopular
-                onPurchase={() => handleCreditPurchase(300, 8)}
-                isLoading={isCheckoutLoading}
+                onSuccess={handlePaymentSuccess}
+                email={user?.email || ''}
+                publicKey={publicKey}
+                userId={user?.id || ''}
               />
               <CreditPackCard
                 credits={700}
-                price={15}
-                onPurchase={() => handleCreditPurchase(700, 15)}
-                isLoading={isCheckoutLoading}
+                price={225}
+                onSuccess={handlePaymentSuccess}
+                email={user?.email || ''}
+                publicKey={publicKey}
+                userId={user?.id || ''}
               />
               <CreditPackCard
                 credits={1500}
-                price={30}
-                onPurchase={() => handleCreditPurchase(1500, 30)}
-                isLoading={isCheckoutLoading}
+                price={450}
+                onSuccess={handlePaymentSuccess}
+                email={user?.email || ''}
+                publicKey={publicKey}
+                userId={user?.id || ''}
               />
             </div>
-            
+
             <div className="mt-8 max-w-2xl mx-auto">
               <div className="bg-muted/50 rounded-lg p-6 text-center">
                 <h3 className="font-semibold mb-2">How Credits Work</h3>

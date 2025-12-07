@@ -29,7 +29,7 @@ export const useSubscription = (): SubscriptionState => {
 
     try {
       const { data, error } = await supabase.functions.invoke('check-subscription');
-      
+
       if (error) {
         console.error('Error checking subscription:', error);
         return;
@@ -83,11 +83,29 @@ export const useSubscription = (): SubscriptionState => {
   useEffect(() => {
     if (!user) return;
 
+    // Subscribe to realtime changes for instant updates
+    const channel = supabase
+      .channel('subscription-updates')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `user_id=eq.${user.id}` },
+        () => refreshSubscription()
+      )
+      .on( // Also listen to users table
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'users', filter: `id=eq.${user.id}` },
+        () => refreshSubscription()
+      )
+      .subscribe();
+
     const interval = setInterval(() => {
       refreshSubscription();
     }, 60000);
 
-    return () => clearInterval(interval);
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(interval);
+    };
   }, [user, refreshSubscription]);
 
   const checkLimit = () => {
