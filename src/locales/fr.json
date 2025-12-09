@@ -1,0 +1,15 @@
+{
+  "app_title": "DocChat",
+  "dashboard": "Tableau de bord",
+  "profile": "Profil",
+  "settings": "Paramètres",
+  "logout": "Déconnexion",
+  "language": "Langue",
+  "welcome": "Bienvenue",
+  "select_language": "Choisir la langue",
+  "sign_in": "Se connecter",
+  "get_started": "Commencer gratuitement",
+  "features": "Fonctionnalités",
+  "how_it_works": "Comment ça marche",
+  "pricing": "Tarifs"
+}

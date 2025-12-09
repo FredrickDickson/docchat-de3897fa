@@ -6,12 +6,15 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { HeaderCreditsDisplay } from "@/components/pricing/HeaderCreditsDisplay";
+import { useTranslation } from 'react-i18next';
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 interface HeaderProps {
   showChat: boolean;
 }
 
 const Header = ({ showChat }: HeaderProps) => {
+  const { t } = useTranslation();
   const { user, loading } = useAuth();
   const { profile } = useProfile();
 
@@ -28,24 +31,25 @@ const Header = ({ showChat }: HeaderProps) => {
           <div className="w-9 h-9 rounded-lg accent-gradient flex items-center justify-center">
             <MessageSquare className="w-5 h-5 text-primary-foreground" />
           </div>
-          <span className="font-serif text-xl font-semibold">DocChat</span>
+          <span className="font-serif text-xl font-semibold">{t('app_title')}</span>
         </Link>
         
         {!showChat && (
           <>
             <nav className="hidden md:flex items-center gap-8">
               <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
-                Features
+                {t('features')}
               </a>
               <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">
-                How it works
+                {t('how_it_works')}
               </a>
               <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
-                Pricing
+                {t('pricing')}
               </a>
             </nav>
 
             <div className="flex items-center gap-3">
+              <LanguageSwitcher />
               <ThemeToggle />
               {!loading && user ? (
                 <div className="flex items-center gap-3">
@@ -65,16 +69,16 @@ const Header = ({ showChat }: HeaderProps) => {
                     </span>
                   </Link>
                   <Button variant="hero" size="sm" asChild>
-                    <Link to="/dashboard">Dashboard</Link>
+                    <Link to="/dashboard">{t('dashboard')}</Link>
                   </Button>
                 </div>
               ) : (
                 <>
                   <Button variant="ghost" size="sm" asChild>
-                    <Link to="/auth">Sign in</Link>
+                    <Link to="/auth">{t('sign_in')}</Link>
                   </Button>
                   <Button variant="hero" size="sm" asChild>
-                    <Link to="/auth">Get started free</Link>
+                    <Link to="/auth">{t('get_started')}</Link>
                   </Button>
                 </>
               )}

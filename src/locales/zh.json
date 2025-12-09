@@ -1,0 +1,15 @@
+{
+  "app_title": "DocChat",
+  "dashboard": "仪表板",
+  "profile": "个人资料",
+  "settings": "设置",
+  "logout": "登出",
+  "language": "语言",
+  "welcome": "欢迎",
+  "select_language": "选择语言",
+  "sign_in": "登录",
+  "get_started": "免费开始",
+  "features": "功能",
+  "how_it_works": "工作原理",
+  "pricing": "价格"
+}

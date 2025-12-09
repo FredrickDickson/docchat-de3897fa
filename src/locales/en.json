@@ -1,0 +1,15 @@
+{
+  "app_title": "DocChat",
+  "dashboard": "Dashboard",
+  "profile": "Profile",
+  "settings": "Settings",
+  "logout": "Logout",
+  "language": "Language",
+  "welcome": "Welcome",
+  "select_language": "Select Language",
+  "sign_in": "Sign in",
+  "get_started": "Get started free",
+  "features": "Features",
+  "how_it_works": "How it works",
+  "pricing": "Pricing"
+}
