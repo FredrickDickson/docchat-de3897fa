@@ -166,11 +166,22 @@ export const ChatInterface = ({ pdfId, userId }: ChatInterfaceProps) => {
       console.error('Chat error:', error);
       // Remove temp messages on error
       setMessages(prev => prev.filter(msg => msg.id !== tempUserMsgId && msg.id !== tempAiMsgId));
-      toast({
-        title: "Error",
-        description: error.message || "Failed to get response from AI. Please try again.",
-        variant: "destructive",
-      });
+      
+      // Check for insufficient credits and redirect to pricing
+      if (error.message?.includes('INSUFFICIENT_CREDITS') || error.message?.includes('Insufficient credits')) {
+        toast({
+          title: "Insufficient credits",
+          description: "You have run out of credits. Please purchase more to continue.",
+          variant: "destructive",
+        });
+        navigate('/pricing');
+      } else {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to get response from AI. Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }

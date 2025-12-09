@@ -52,8 +52,16 @@ export const DocumentChatInterface = ({ documentId, documentName }: DocumentChat
     try {
       await sendMessage(question);
       await incrementUsage();
-    } catch (err) {
-      // Error is handled by the hook
+    } catch (err: any) {
+      // Redirect to pricing if insufficient credits
+      if (err.message?.includes('Insufficient credits') || err.message?.includes('INSUFFICIENT_CREDITS')) {
+        toast({
+          title: 'Insufficient credits',
+          description: 'You have run out of credits. Please purchase more to continue.',
+          variant: 'destructive',
+        });
+        navigate('/pricing');
+      }
     }
   };
 
