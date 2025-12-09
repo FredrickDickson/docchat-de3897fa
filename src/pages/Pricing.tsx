@@ -142,7 +142,7 @@ const Pricing = () => {
                 features={[
                   "600 credits per month",
                   "100 pages per summary",
-                  "Unlimited AI chat",
+
                   "200 OCR images",
                   "10GB storage",
                   "Priority support",
@@ -163,7 +163,7 @@ const Pricing = () => {
                 features={[
                   "1500 credits per month",
                   "200 pages per summary",
-                  "Unlimited AI chat",
+
                   "500 OCR images",
                   "50GB storage",
                   "Priority support",
