@@ -3,7 +3,7 @@
  * Core API integration for Paystack payments via Supabase Edge Functions
  */
 
-import { PAYSTACK_CONFIG, type PlanType, type BillingInterval } from './paystackConfig';
+import { PAYSTACK_CONFIG, PLANS, type PlanType, type BillingInterval } from './paystackConfig';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface InitializePaymentParams {
@@ -49,11 +49,21 @@ export const initializePayment = async (
   // Generate unique reference
   const reference = `PAY_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
-  const { data, error } = await supabase.functions.invoke('paystack-initialize', {
+  // Get plan code from config if this is a subscription
+  let planCode: string | undefined;
+  if (params.plan !== 'free') {
+    const planConfig = PLANS[params.plan];
+    if (planConfig.paystackPlanCodes) {
+      planCode = planConfig.paystackPlanCodes[params.interval];
+    }
+  }
+
+  const { data, error } = await supabase.functions.invoke('initialize-paystack-transaction', {
     body: {
       email: params.email,
       amount: params.amount,
-      plan: params.plan,
+      plan: params.plan, // Internal plan name (basic, pro)
+      plan_code: planCode, // Paystack plan code (PLN_...)
       interval: params.interval,
       reference,
       metadata: params.metadata,

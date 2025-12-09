@@ -6,10 +6,10 @@
 export const PAYSTACK_CONFIG = {
   publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || '',
   apiBaseUrl: 'https://api.paystack.co',
-  currency: 'NGN', // Nigerian Naira
+  currency: 'GHS', // Ghanaian Cedi
 };
 
-export type PlanType = 'free' | 'basic' | 'pro';
+export type PlanType = 'free' | 'basic' | 'pro' | 'elite';
 export type BillingInterval = 'monthly' | 'annual';
 
 export interface Plan {
@@ -67,12 +67,12 @@ export const PLANS: Record<PlanType, Plan> = {
       monthlyStorage: 100,
     },
     pricing: {
-      monthly: 2000, // ₦2,000/month
-      annual: 20000, // ₦20,000/year (2 months free)
+      monthly: 105, // GHS 105/month
+      annual: 1050, // GHS 1050/year
     },
     paystackPlanCodes: {
-      monthly: 'PLN_basic_monthly',
-      annual: 'PLN_basic_annual',
+      monthly: 'PLN_nncrqdk5khubj5n',
+      annual: '', // Annual code not provided
     },
   },
   pro: {
@@ -93,12 +93,36 @@ export const PLANS: Record<PlanType, Plan> = {
       monthlyStorage: 1000,
     },
     pricing: {
-      monthly: 5000, // ₦5,000/month
-      annual: 50000, // ₦50,000/year (2 months free)
+      monthly: 225, // GHS 225/month
+      annual: 2250, // GHS 2250/year
     },
     paystackPlanCodes: {
-      monthly: 'PLN_pro_monthly',
-      annual: 'PLN_pro_annual',
+      monthly: 'PLN_2lek6n16s6q31nq',
+      annual: '', // Annual code not provided
+    },
+  },
+  elite: {
+    id: 'elite',
+    name: 'Elite',
+    description: 'For enterprise users',
+    features: [
+      'Everything in Pro',
+      'Dedicated account manager',
+      '24/7 Phone support',
+      'Unlimited storage',
+      'SLA agreement',
+    ],
+    limits: {
+      dailySummaries: -1,
+      monthlyStorage: 10000,
+    },
+    pricing: {
+      monthly: 435, // GHS 435/month
+      annual: 4350, // GHS 4350/year
+    },
+    paystackPlanCodes: {
+      monthly: 'PLN_soiwu6ho4ultenw',
+      annual: '', // Annual code not provided
     },
   },
 };
@@ -119,12 +143,12 @@ export const getPrice = (planId: PlanType, interval: BillingInterval): number =>
 };
 
 /**
- * Format price in Naira
+ * Format price in GHS
  */
 export const formatPrice = (amount: number): string => {
-  return new Intl.NumberFormat('en-NG', {
+  return new Intl.NumberFormat('en-GH', {
     style: 'currency',
-    currency: 'NGN',
+    currency: 'GHS',
     minimumFractionDigits: 0,
   }).format(amount);
 };
