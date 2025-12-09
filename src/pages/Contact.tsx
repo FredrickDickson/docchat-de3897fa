@@ -8,30 +8,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 
 const Contact = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [subject, setSubject] = useState("");
-  const [message, setMessage] = useState("");
-  const { toast } = useToast();
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    // Placeholder for form submission
-    setTimeout(() => {
-      toast({
-        title: "Message sent!",
-        description: "We'll get back to you within 24 hours.",
-      });
-      setName("");
-      setEmail("");
-      setSubject("");
-      setMessage("");
-      setIsLoading(false);
-    }, 1500);
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -60,9 +36,9 @@ const Contact = () => {
             </p>
           </div>
 
-          <div className="grid lg:grid-cols-3 gap-12">
+          <div className="grid lg:grid-cols-3 gap-12 justify-center">
             {/* Contact Info */}
-            <div className="space-y-8">
+            <div className="space-y-8 lg:col-start-2">
               <div className="p-6 rounded-2xl bg-muted/50 border border-border">
                 <div className="w-12 h-12 rounded-xl accent-gradient flex items-center justify-center mb-4">
                   <Mail className="w-6 h-6 text-primary-foreground" />
@@ -96,69 +72,6 @@ const Contact = () => {
                   United States
                 </p>
               </div>
-            </div>
-
-            {/* Contact Form */}
-            <div className="lg:col-span-2">
-              <form onSubmit={handleSubmit} className="p-8 rounded-2xl bg-card border border-border shadow-sm space-y-6">
-                <div className="grid sm:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Your name</Label>
-                    <Input
-                      id="name"
-                      placeholder="John Doe"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email address</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="you@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="subject">Subject</Label>
-                  <Input
-                    id="subject"
-                    placeholder="How can we help?"
-                    value={subject}
-                    onChange={(e) => setSubject(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="message">Message</Label>
-                  <Textarea
-                    id="message"
-                    placeholder="Tell us more about your inquiry..."
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    rows={6}
-                    required
-                  />
-                </div>
-
-                <Button type="submit" variant="hero" size="lg" className="w-full" disabled={isLoading}>
-                  {isLoading ? (
-                    "Sending..."
-                  ) : (
-                    <>
-                      <Send className="w-4 h-4 mr-2" />
-                      Send Message
-                    </>
-                  )}
-                </Button>
-              </form>
             </div>
           </div>
         </div>

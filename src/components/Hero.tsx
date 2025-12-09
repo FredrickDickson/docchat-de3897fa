@@ -56,11 +56,7 @@ const Hero = ({ onGetStarted }: HeroProps) => {
                 </>
               )}
             </Button>
-            {!user && (
-              <Button variant="soft" size="xl">
-                Watch demo
-              </Button>
-            )}
+
           </div>
           
           {!loading && !user && (

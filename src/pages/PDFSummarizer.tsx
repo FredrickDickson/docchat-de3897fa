@@ -397,6 +397,8 @@ const PDFSummarizer = () => {
                 )}
               </TabsContent>
 
+
+
               <TabsContent value="chat">
                 <Card>
                   <CardHeader>

@@ -1,4 +1,4 @@
-import { MessageSquare, User } from "lucide-react";
+import { MessageSquare, User, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
@@ -8,6 +8,11 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { HeaderCreditsDisplay } from "@/components/pricing/HeaderCreditsDisplay";
 import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 interface HeaderProps {
   showChat: boolean;
@@ -82,6 +87,67 @@ const Header = ({ showChat }: HeaderProps) => {
                   </Button>
                 </>
               )}
+            </div>
+
+            {/* Mobile Menu */}
+            <div className="md:hidden flex items-center gap-2">
+              <LanguageSwitcher />
+              <ThemeToggle />
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Menu className="h-6 w-6" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent>
+                  <div className="flex flex-col gap-6 mt-8">
+                    <nav className="flex flex-col gap-4">
+                      <a href="#features" className="text-lg font-medium hover:text-primary transition-colors">
+                        {t('features')}
+                      </a>
+                      <a href="#how-it-works" className="text-lg font-medium hover:text-primary transition-colors">
+                        {t('how_it_works')}
+                      </a>
+                      <a href="#pricing" className="text-lg font-medium hover:text-primary transition-colors">
+                        {t('pricing')}
+                      </a>
+                    </nav>
+                    <div className="flex flex-col gap-3">
+                      {!loading && user ? (
+                        <>
+                          <HeaderCreditsDisplay />
+                          <Link 
+                            to="/profile" 
+                            className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-accent transition-colors"
+                          >
+                            <Avatar className="w-8 h-8">
+                              <AvatarImage src={profile?.avatar_url || undefined} alt={getDisplayName()} />
+                              <AvatarFallback className="text-sm bg-primary/10 text-primary">
+                                {getDisplayName().charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="font-medium">
+                              {getDisplayName()}
+                            </span>
+                          </Link>
+                          <Button variant="hero" className="w-full" asChild>
+                            <Link to="/dashboard">{t('dashboard')}</Link>
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button variant="ghost" className="w-full justify-start" asChild>
+                            <Link to="/auth">{t('sign_in')}</Link>
+                          </Button>
+                          <Button variant="hero" className="w-full" asChild>
+                            <Link to="/auth">{t('get_started')}</Link>
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
           </>
         )}
