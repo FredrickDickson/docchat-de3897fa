@@ -11,5 +11,188 @@
   "get_started": "免费开始",
   "features": "功能",
   "how_it_works": "工作原理",
-  "pricing": "价格"
+  "hero": {
+    "badge": "AI驱动的文档智能",
+    "title_start": "与任何",
+    "title_highlight": "PDF、合同或报告聊天。",
+    "subtitle": "AI驱动的文档助手，可在几秒钟内总结法律合同、分析财务报告并从学术论文中提取见解。",
+    "upload_button": "上传文档",
+    "start_free_button": "免费开始聊天",
+    "free_text": "每天5次免费聊天 • 无需信用卡",
+    "pill_pdf": "PDF和文档",
+    "pill_natural": "自然对话",
+    "pill_instant": "即时答案"
+  },
+  "features_section": {
+    "title": "文档智能，重新构想",
+    "subtitle": "停止略读。开始理解。每个功能都旨在帮助您更快地从文档中提取价值。",
+    "items": {
+      "natural_conversations": {
+        "title": "自然对话",
+        "description": "用简单的中文询问有关文档的问题。我们的AI理解上下文、细微差别和特定术语，以提供准确的答案。"
+      },
+      "universal_format": {
+        "title": "通用格式支持",
+        "description": "上传PDF、Word文档、PowerPoint和文本文件。非常适合法律合同、财务报表和研究论文。"
+      },
+      "instant_summaries": {
+        "title": "即时摘要",
+        "description": "立即获取长文档的简明摘要。从简要概述到关键点和论点的详细细分中进行选择。"
+      },
+      "export_share": {
+        "title": "导出和分享",
+        "description": "将您的摘要和聊天记录下载为TXT或PDF。通过Slack、Notion或电子邮件直接与您的团队分享见解。"
+      },
+      "security": {
+        "title": "企业级安全",
+        "description": "您的数据在静态和传输中都经过加密。文档会自动处理，并在使用后立即删除。"
+      },
+      "multi_language": {
+        "title": "多语言支持",
+        "description": "上传任何语言的文档并用您喜欢的语言聊天。打破国际业务中的语言障碍。"
+      }
+    }
+  },
+  "how_it_works_section": {
+    "title": "工作原理",
+    "subtitle": "从上传到获得见解不到30秒",
+    "steps": {
+      "upload": {
+        "title": "上传您的文档",
+        "description": "拖放任何PDF、PowerPoint或Word文档。我们处理最大100MB的文件。"
+      },
+      "analyze": {
+        "title": "AI分析它",
+        "description": "我们的AI阅读并理解完整的上下文、结构和关键信息。"
+      },
+      "chat": {
+        "title": "开始聊天",
+        "description": "自然地提问、请求摘要或探索特定部分。"
+      }
+    }
+  },
+  "pricing_section": {
+    "title": "简单、透明的定价",
+    "subtitle": "每周节省数小时。一个快速的答案可以节省一小时的阅读时间。",
+    "plans": {
+      "free": {
+        "name": "免费",
+        "period": "永久",
+        "description": "非常适合试用",
+        "cta": "免费开始",
+        "features": [
+          "每天5次文档聊天",
+          "每个文档最多50页",
+          "基本导出 (TXT)",
+          "标准响应速度"
+        ]
+      },
+      "pro": {
+        "name": "专业版",
+        "period": "每月",
+        "description": "适合高级用户",
+        "cta": "获取专业版",
+        "most_popular": "最受欢迎",
+        "features": [
+          "无限文档聊天",
+          "每个文档最多200页",
+          "所有导出格式",
+          "优先处理",
+          "保存聊天记录",
+          "Slack和Notion集成"
+        ]
+      },
+      "credits": {
+        "name": "积分",
+        "period": "每次聊天",
+        "description": "按需付费",
+        "cta": "购买积分",
+        "features": [
+          "无月度承诺",
+          "每个文档最多100页",
+          "所有导出格式",
+          "优先处理",
+          "积分永不过期"
+        ]
+      }
+    },
+    "disclaimer": "所有计划都包含每月重置的积分。随时以3-30美元购买额外积分。"
+  },
+  "footer": {
+    "privacy": "隐私",
+    "terms": "条款",
+    "contact": "联系我们",
+    "copyright": "© {{year}} DocChat. 版权所有。"
+  },
+  "dashboard_page": {
+    "welcome": "欢迎，{{name}}",
+    "subtitle": "上传文档并开始与它们聊天",
+    "upload_button": "上传文档",
+    "summarizer_button": "PDF摘要器",
+    "open_button": "打开",
+    "loading": "正在加载文档...",
+    "empty_title": "暂无文档",
+    "empty_desc": "上传您的第一个文档以开始",
+    "delete_success": "文档已删除",
+    "delete_error": "删除文档时出错"
+  },
+  "summarizer": {
+    "title": "PDF摘要器",
+    "tabs": {
+      "create": "创建摘要",
+      "chat": "AI聊天",
+      "history": "历史记录"
+    },
+    "upload_card": {
+      "title": "上传PDF",
+      "description": "上传PDF文件以生成AI驱动的摘要"
+    },
+    "config_card": {
+      "title": "配置摘要",
+      "description": "选择摘要长度和领域重点",
+      "length_label": "摘要长度",
+      "domain_label": "领域重点",
+      "generate_button": "生成摘要",
+      "generating": "正在生成摘要..."
+    },
+    "result_card": {
+      "title": "摘要",
+      "copy_button": "复制到剪贴板",
+      "download_txt": "TXT",
+      "download_json": "JSON",
+      "download_csv": "CSV",
+      "export": "导出"
+    },
+    "chat_card": {
+      "title": "与PDF聊天",
+      "description": "询问有关您上传文档的问题",
+      "empty_state": "在“创建摘要”选项卡中上传PDF以开始聊天。"
+    }
+  },
+  "contact": {
+    "title": "联系我们",
+    "subtitle": "有问题或反馈？我们很乐意听取您的意见。给我们留言，我们会尽快回复。",
+    "email_us": "给我们发邮件",
+    "email_desc": "一般咨询和支持",
+    "response_time": "响应时间",
+    "response_desc": "我们通常在工作日的24小时内回复。",
+    "location": "位置",
+    "back_home": "返回首页"
+  },
+  "auth": {
+    "welcome_back": "欢迎回来",
+    "create_account": "创建您的帐户",
+    "sign_in_desc": "登录以继续与您的文档聊天",
+    "sign_up_desc": "免费开始与您的文档聊天",
+    "full_name": "全名",
+    "email": "电子邮件地址",
+    "password": "密码",
+    "forgot_password": "忘记密码？",
+    "sign_in_button": "登录",
+    "create_account_button": "创建帐户",
+    "continue_google": "继续使用Google",
+    "have_account": "已有帐户？",
+    "no_account": "没有帐户？",
+    "terms_privacy": "继续即表示您同意我们的{{terms}}和{{privacy}}"
+  }
 }

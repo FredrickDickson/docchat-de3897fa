@@ -11,5 +11,188 @@
   "get_started": "Commencer gratuitement",
   "features": "Fonctionnalités",
   "how_it_works": "Comment ça marche",
-  "pricing": "Tarifs"
+  "hero": {
+    "badge": "Intelligence Documentaire par IA",
+    "title_start": "Discutez avec tout",
+    "title_highlight": "PDF, Contrat ou Rapport.",
+    "subtitle": "L'assistant documentaire alimenté par l'IA qui résume les contrats juridiques, analyse les rapports financiers et extrait des informations des articles universitaires en quelques secondes.",
+    "upload_button": "Télécharger un document",
+    "start_free_button": "Commencer gratuitement",
+    "free_text": "5 chats gratuits par jour • Pas de carte de crédit requise",
+    "pill_pdf": "PDFs et Documents",
+    "pill_natural": "Conversations Naturelles",
+    "pill_instant": "Réponses Instantanées"
+  },
+  "features_section": {
+    "title": "L'intelligence documentaire, réinventée",
+    "subtitle": "Arrêtez de survoler. Commencez à comprendre. Chaque fonctionnalité est conçue pour vous aider à extraire de la valeur des documents plus rapidement.",
+    "items": {
+      "natural_conversations": {
+        "title": "Conversations Naturelles",
+        "description": "Posez des questions sur vos documents en français simple. Notre IA comprend le contexte, les nuances et la terminologie spécifique pour des réponses précises."
+      },
+      "universal_format": {
+        "title": "Support de Format Universel",
+        "description": "Téléchargez des PDF, des documents Word, des PowerPoint et des fichiers texte. Parfait pour les contrats juridiques, les états financiers et les documents de recherche."
+      },
+      "instant_summaries": {
+        "title": "Résumés Instantanés",
+        "description": "Obtenez des résumés concis de longs documents instantanément. Choisissez entre de brefs aperçus et des analyses détaillées des points clés et des arguments."
+      },
+      "export_share": {
+        "title": "Exporter et Partager",
+        "description": "Téléchargez vos résumés et votre historique de chat au format TXT ou PDF. Partagez des informations directement avec votre équipe via Slack, Notion ou par e-mail."
+      },
+      "security": {
+        "title": "Sécurité de Niveau Entreprise",
+        "description": "Vos données sont chiffrées au repos et en transit. Les documents sont traités automatiquement et peuvent être supprimés immédiatement après utilisation."
+      },
+      "multi_language": {
+        "title": "Support Multi-langues",
+        "description": "Téléchargez des documents dans n'importe quelle langue et discutez dans votre langue préférée. Brisez les barrières linguistiques dans les affaires internationales."
+      }
+    }
+  },
+  "how_it_works_section": {
+    "title": "Comment ça marche",
+    "subtitle": "Du téléchargement à l'information en moins de 30 secondes",
+    "steps": {
+      "upload": {
+        "title": "Téléchargez votre document",
+        "description": "Glissez-déposez n'importe quel PDF, PowerPoint ou document Word. Nous gérons les fichiers jusqu'à 100 Mo."
+      },
+      "analyze": {
+        "title": "L'IA l'analyse",
+        "description": "Notre IA lit et comprend le contexte complet, la structure et les informations clés."
+      },
+      "chat": {
+        "title": "Commencez à discuter",
+        "description": "Posez des questions, demandez des résumés ou explorez des sections spécifiques naturellement."
+      }
+    }
+  },
+  "pricing_section": {
+    "title": "Tarification simple et transparente",
+    "subtitle": "Gagnez des heures chaque semaine. Une réponse rapide peut économiser une heure de lecture.",
+    "plans": {
+      "free": {
+        "name": "Gratuit",
+        "period": "pour toujours",
+        "description": "Parfait pour essayer",
+        "cta": "Commencer gratuitement",
+        "features": [
+          "5 chats de documents par jour",
+          "Jusqu'à 50 pages par document",
+          "Exportation de base (TXT)",
+          "Vitesse de réponse standard"
+        ]
+      },
+      "pro": {
+        "name": "Pro",
+        "period": "par mois",
+        "description": "Pour les utilisateurs avancés",
+        "cta": "Obtenir Pro",
+        "most_popular": "Le plus populaire",
+        "features": [
+          "Chats de documents illimités",
+          "Jusqu'à 200 pages par document",
+          "Tous les formats d'exportation",
+          "Traitement prioritaire",
+          "Historique de chat enregistré",
+          "Intégration Slack et Notion"
+        ]
+      },
+      "credits": {
+        "name": "Crédits",
+        "period": "par chat",
+        "description": "Payez à l'utilisation",
+        "cta": "Acheter des crédits",
+        "features": [
+          "Pas d'engagement mensuel",
+          "Jusqu'à 100 pages par document",
+          "Tous les formats d'exportation",
+          "Traitement prioritaire",
+          "Les crédits n'expirent jamais"
+        ]
+      }
+    },
+    "disclaimer": "Tous les plans incluent des crédits mensuels qui se réinitialisent. Achetez des crédits supplémentaires à tout moment pour 3$-30$."
+  },
+  "footer": {
+    "privacy": "Confidentialité",
+    "terms": "Conditions",
+    "contact": "Contact",
+    "copyright": "© {{year}} DocChat. Tous droits réservés."
+  },
+  "dashboard_page": {
+    "welcome": "Bienvenue, {{name}}",
+    "subtitle": "Téléchargez des documents et commencez à discuter avec eux",
+    "upload_button": "Télécharger un document",
+    "summarizer_button": "Résumeur de PDF",
+    "open_button": "Ouvrir",
+    "loading": "Chargement des documents...",
+    "empty_title": "Aucun document pour le moment",
+    "empty_desc": "Téléchargez votre premier document pour commencer",
+    "delete_success": "Document supprimé",
+    "delete_error": "Erreur lors de la suppression du document"
+  },
+  "summarizer": {
+    "title": "Résumeur de PDF",
+    "tabs": {
+      "create": "Créer un résumé",
+      "chat": "Chat IA",
+      "history": "Historique"
+    },
+    "upload_card": {
+      "title": "Télécharger PDF",
+      "description": "Téléchargez un fichier PDF pour générer un résumé alimenté par l'IA"
+    },
+    "config_card": {
+      "title": "Configurer le résumé",
+      "description": "Choisissez la longueur du résumé et le domaine",
+      "length_label": "Longueur du résumé",
+      "domain_label": "Domaine",
+      "generate_button": "Générer le résumé",
+      "generating": "Génération du résumé..."
+    },
+    "result_card": {
+      "title": "Résumé",
+      "copy_button": "Copier dans le presse-papiers",
+      "download_txt": "TXT",
+      "download_json": "JSON",
+      "download_csv": "CSV",
+      "export": "Exporter"
+    },
+    "chat_card": {
+      "title": "Discuter avec le PDF",
+      "description": "Posez des questions sur votre document téléchargé",
+      "empty_state": "Téléchargez un PDF dans l'onglet \"Créer un résumé\" pour commencer à discuter."
+    }
+  },
+  "contact": {
+    "title": "Contactez-nous",
+    "subtitle": "Vous avez une question ou un commentaire ? Nous aimerions avoir de vos nouvelles. Envoyez-nous un message et nous vous répondrons dès que possible.",
+    "email_us": "Envoyez-nous un e-mail",
+    "email_desc": "Pour les demandes générales et le support",
+    "response_time": "Temps de réponse",
+    "response_desc": "Nous répondons généralement dans les 24 heures les jours ouvrables.",
+    "location": "Emplacement",
+    "back_home": "Retour à l'accueil"
+  },
+  "auth": {
+    "welcome_back": "Bon retour",
+    "create_account": "Créez votre compte",
+    "sign_in_desc": "Connectez-vous pour continuer à discuter avec vos documents",
+    "sign_up_desc": "Commencez à discuter avec vos documents gratuitement",
+    "full_name": "Nom complet",
+    "email": "Adresse e-mail",
+    "password": "Mot de passe",
+    "forgot_password": "Mot de passe oublié ?",
+    "sign_in_button": "Se connecter",
+    "create_account_button": "Créer un compte",
+    "continue_google": "Continuer avec Google",
+    "have_account": "Vous avez déjà un compte ?",
+    "no_account": "Vous n'avez pas de compte ?",
+    "terms_privacy": "En continuant, vous acceptez nos {{terms}} et {{privacy}}"
+  }
 }

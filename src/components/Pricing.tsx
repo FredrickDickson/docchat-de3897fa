@@ -5,64 +5,48 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-
-const plans = [
-  {
-    name: "Free",
-    price: "$0",
-    period: "forever",
-    description: "Perfect for trying it out",
-    features: [
-      "5 document chats per day",
-      "Up to 50 pages per document",
-      "Basic export (TXT)",
-      "Standard response speed",
-    ],
-    cta: "Start free",
-    variant: "outline" as const,
-    action: "free",
-  },
-  {
-    name: "Pro",
-    price: "$19",
-    period: "per month",
-    description: "For power users",
-    features: [
-      "Unlimited document chats",
-      "Up to 200 pages per document",
-      "All export formats",
-      "Priority processing",
-      "Chat history saved",
-      "Slack & Notion integration",
-    ],
-    cta: "Get Pro",
-    variant: "hero" as const,
-    popular: true,
-    action: "pro",
-  },
-  {
-    name: "Credits",
-    price: "$0.25",
-    period: "per chat",
-    description: "Pay as you go",
-    features: [
-      "No monthly commitment",
-      "Up to 100 pages per document",
-      "All export formats",
-      "Priority processing",
-      "Credits never expire",
-    ],
-    cta: "Buy credits",
-    variant: "outline" as const,
-    action: "credits",
-  },
-];
+import { useTranslation } from 'react-i18next';
 
 const Pricing = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState<string | null>(null);
+  const { t } = useTranslation();
+
+  const plans = [
+    {
+      name: t('pricing_section.plans.free.name'),
+      price: "$0",
+      period: t('pricing_section.plans.free.period'),
+      description: t('pricing_section.plans.free.description'),
+      features: t('pricing_section.plans.free.features', { returnObjects: true }) as string[],
+      cta: t('pricing_section.plans.free.cta'),
+      variant: "outline" as const,
+      action: "free",
+    },
+    {
+      name: t('pricing_section.plans.pro.name'),
+      price: "$19",
+      period: t('pricing_section.plans.pro.period'),
+      description: t('pricing_section.plans.pro.description'),
+      features: t('pricing_section.plans.pro.features', { returnObjects: true }) as string[],
+      cta: t('pricing_section.plans.pro.cta'),
+      variant: "hero" as const,
+      popular: true,
+      action: "pro",
+    },
+    {
+      name: t('pricing_section.plans.credits.name'),
+      price: "$0.25",
+      period: t('pricing_section.plans.credits.period'),
+      description: t('pricing_section.plans.credits.description'),
+      features: t('pricing_section.plans.credits.features', { returnObjects: true }) as string[],
+      cta: t('pricing_section.plans.credits.cta'),
+      variant: "outline" as const,
+      action: "credits",
+    },
+  ];
 
   const handlePlanClick = async (action: string) => {
     if (!user) {
@@ -79,10 +63,10 @@ const Pricing = () => {
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-serif mb-4">
-            Simple, transparent pricing
+            {t('pricing_section.title')}
           </h2>
           <p className="text-muted-foreground max-w-xl mx-auto">
-            Save hours every week. One quick answer can save an hour of reading.
+            {t('pricing_section.subtitle')}
           </p>
         </div>
 
@@ -98,7 +82,7 @@ const Pricing = () => {
             >
               {plan.popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full accent-gradient text-primary-foreground text-xs font-semibold">
-                  Most popular
+                  {t('pricing_section.plans.pro.most_popular')}
                 </div>
               )}
 
@@ -134,7 +118,7 @@ const Pricing = () => {
         </div>
 
         <p className="text-center text-sm text-muted-foreground mt-8">
-          All plans include monthly credits that reset. Buy extra credits anytime for $3-$30.
+          {t('pricing_section.disclaimer')}
         </p>
       </div>
     </section>

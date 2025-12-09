@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useTranslation, Trans } from 'react-i18next';
 import { MessageSquare, Mail, Lock, User, ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Separator } from "@/components/ui/separator";
 
 const Auth = () => {
+  const { t } = useTranslation();
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
@@ -145,19 +147,19 @@ const Auth = () => {
 
           <div className="text-center lg:text-left">
             <h2 className="font-serif text-3xl font-bold">
-              {isLogin ? "Welcome back" : "Create your account"}
+              {isLogin ? t('auth.welcome_back') : t('auth.create_account')}
             </h2>
             <p className="mt-2 text-muted-foreground">
               {isLogin 
-                ? "Sign in to continue chatting with your documents" 
-                : "Start chatting with your documents for free"}
+                ? t('auth.sign_in_desc') 
+                : t('auth.sign_up_desc')}
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {!isLogin && (
               <div className="space-y-2">
-                <Label htmlFor="name">Full name</Label>
+                <Label htmlFor="name">{t('auth.full_name')}</Label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
@@ -174,7 +176,7 @@ const Auth = () => {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email address</Label>
+              <Label htmlFor="email">{t('auth.email')}</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
@@ -190,7 +192,7 @@ const Auth = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('auth.password')}</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
@@ -209,7 +211,7 @@ const Auth = () => {
             {isLogin && (
               <div className="flex justify-end">
                 <button type="button" className="text-sm text-primary hover:underline">
-                  Forgot password?
+                  {t('auth.forgot_password')}
                 </button>
               </div>
             )}
@@ -220,7 +222,7 @@ const Auth = () => {
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
                   Please wait...
                 </>
-              ) : isLogin ? "Sign in" : "Create account"}
+              ) : isLogin ? t('auth.sign_in_button') : t('auth.create_account_button')}
             </Button>
           </form>
 
@@ -259,25 +261,25 @@ const Auth = () => {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            {isLoading ? "Signing in..." : "Continue with Google"}
+            {isLoading ? "Signing in..." : t('auth.continue_google')}
           </Button>
 
           <p className="text-center text-sm text-muted-foreground">
-            {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
+            {isLogin ? t('auth.no_account') : t('auth.have_account')}{" "}
             <button
               type="button"
               onClick={() => setIsLogin(!isLogin)}
               className="text-primary font-medium hover:underline"
             >
-              {isLogin ? "Sign up" : "Sign in"}
+              {isLogin ? t('auth.create_account_button') : t('auth.sign_in_button')}
             </button>
           </p>
 
           <p className="text-center text-xs text-muted-foreground">
-            By continuing, you agree to our{" "}
-            <Link to="/terms" className="underline hover:text-foreground">Terms of Service</Link>
-            {" "}and{" "}
-            <Link to="/privacy" className="underline hover:text-foreground">Privacy Policy</Link>
+            <Trans i18nKey="auth.terms_privacy" components={{
+              terms: <Link to="/terms" className="underline hover:text-foreground">{t('footer.terms')}</Link>,
+              privacy: <Link to="/privacy" className="underline hover:text-foreground">{t('footer.privacy')}</Link>
+            }} />
           </p>
         </div>
       </div>

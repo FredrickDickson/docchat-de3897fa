@@ -1,36 +1,39 @@
 import { Upload, Sparkles, MessageSquare } from "lucide-react";
-
-const steps = [
-  {
-    icon: Upload,
-    step: "01",
-    title: "Upload your document",
-    description: "Drag and drop any PDF, PowerPoint, or Word document. We handle files up to 100MB.",
-  },
-  {
-    icon: Sparkles,
-    step: "02",
-    title: "AI analyzes it",
-    description: "Our AI reads and understands the full context, structure, and key information.",
-  },
-  {
-    icon: MessageSquare,
-    step: "03",
-    title: "Start chatting",
-    description: "Ask questions, request summaries, or explore specific sections naturally.",
-  },
-];
+import { useTranslation } from 'react-i18next';
 
 const HowItWorks = () => {
+  const { t } = useTranslation();
+
+  const steps = [
+    {
+      icon: Upload,
+      step: "01",
+      title: t('how_it_works_section.steps.upload.title'),
+      description: t('how_it_works_section.steps.upload.description'),
+    },
+    {
+      icon: Sparkles,
+      step: "02",
+      title: t('how_it_works_section.steps.analyze.title'),
+      description: t('how_it_works_section.steps.analyze.description'),
+    },
+    {
+      icon: MessageSquare,
+      step: "03",
+      title: t('how_it_works_section.steps.chat.title'),
+      description: t('how_it_works_section.steps.chat.description'),
+    },
+  ];
+
   return (
     <section id="how-it-works" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-serif mb-4">
-            How it works
+            {t('how_it_works_section.title')}
           </h2>
           <p className="text-muted-foreground">
-            From upload to insight in under 30 seconds
+            {t('how_it_works_section.subtitle')}
           </p>
         </div>
 

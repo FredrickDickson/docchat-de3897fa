@@ -2,6 +2,7 @@ import { ArrowRight, Sparkles, FileText, MessageSquare, Zap, Upload } from "luci
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useTranslation } from 'react-i18next';
 
 interface HeroProps {
   onGetStarted: () => void;
@@ -10,6 +11,7 @@ interface HeroProps {
 const Hero = ({ onGetStarted }: HeroProps) => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleGetStarted = () => {
     if (user) {
@@ -29,17 +31,17 @@ const Hero = ({ onGetStarted }: HeroProps) => {
         <div className="max-w-3xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-primary/10 text-foreground px-4 py-2 rounded-full mb-6 animate-fade-up">
             <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium">AI-Powered Document Intelligence</span>
+            <span className="text-sm font-medium">{t('hero.badge')}</span>
           </div>
           
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-serif leading-tight mb-6 animate-fade-up" style={{ animationDelay: "0.1s" }}>
-            Chat with any
+            {t('hero.title_start')}
             <br />
-            <span className="text-primary">PDF, Contract, or Report.</span>
+            <span className="text-primary">{t('hero.title_highlight')}</span>
           </h1>
           
           <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto animate-fade-up" style={{ animationDelay: "0.2s" }}>
-            The AI-powered document assistant that summarizes legal contracts, analyzes financial reports, and extracts insights from academic papers in seconds.
+            {t('hero.subtitle')}
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-up" style={{ animationDelay: "0.3s" }}>
@@ -47,11 +49,11 @@ const Hero = ({ onGetStarted }: HeroProps) => {
               {user ? (
                 <>
                   <Upload className="w-5 h-5" />
-                  Upload Document
+                  {t('hero.upload_button')}
                 </>
               ) : (
                 <>
-                  Start chatting free
+                  {t('hero.start_free_button')}
                   <ArrowRight className="w-5 h-5" />
                 </>
               )}
@@ -61,7 +63,7 @@ const Hero = ({ onGetStarted }: HeroProps) => {
           
           {!loading && !user && (
             <p className="text-sm text-muted-foreground mt-6 animate-fade-up" style={{ animationDelay: "0.4s" }}>
-              5 free chats daily • No credit card required
+              {t('hero.free_text')}
             </p>
           )}
         </div>
@@ -70,15 +72,15 @@ const Hero = ({ onGetStarted }: HeroProps) => {
         <div className="flex flex-wrap justify-center gap-4 max-w-2xl mx-auto mt-16 animate-fade-up" style={{ animationDelay: "0.5s" }}>
           <div className="flex items-center gap-2 bg-card px-4 py-2 rounded-full border border-border">
             <FileText className="w-4 h-4 text-primary" />
-            <span className="text-sm">PDFs & Documents</span>
+            <span className="text-sm">{t('hero.pill_pdf')}</span>
           </div>
           <div className="flex items-center gap-2 bg-card px-4 py-2 rounded-full border border-border">
             <MessageSquare className="w-4 h-4 text-primary" />
-            <span className="text-sm">Natural Conversations</span>
+            <span className="text-sm">{t('hero.pill_natural')}</span>
           </div>
           <div className="flex items-center gap-2 bg-card px-4 py-2 rounded-full border border-border">
             <Zap className="w-4 h-4 text-primary" />
-            <span className="text-sm">Instant Answers</span>
+            <span className="text-sm">{t('hero.pill_instant')}</span>
           </div>
         </div>
       </div>

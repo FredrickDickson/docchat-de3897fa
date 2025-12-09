@@ -22,12 +22,14 @@ import { Progress } from "@/components/ui/progress";
 import { useSubscription } from "@/hooks/useSubscription";
 import { UsageIndicator } from "@/components/pricing/UsageIndicator";
 import { ChatInterface } from "@/components/chat/ChatInterface";
+import { useTranslation } from 'react-i18next';
 
 const PDFSummarizer = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isOverLimit, dailyUsage, plan, incrementUsage } = useSubscription();
+  const { t } = useTranslation();
 
   const [extractedText, setExtractedText] = useState<string>("");
   const [summary, setSummary] = useState<string>("");
@@ -239,7 +241,7 @@ const PDFSummarizer = () => {
                 <div className="w-9 h-9 rounded-lg accent-gradient flex items-center justify-center">
                   <FileText className="w-5 h-5 text-primary-foreground" />
                 </div>
-                <span className="font-serif text-xl font-semibold">PDF Summarizer</span>
+                <span className="font-serif text-xl font-semibold">{t('summarizer.title')}</span>
               </div>
             </div>
           </div>
@@ -249,9 +251,9 @@ const PDFSummarizer = () => {
           <div className="max-w-4xl mx-auto space-y-6">
             <Tabs defaultValue="create" className="w-full">
               <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="create">Create Summary</TabsTrigger>
-                <TabsTrigger value="chat">AI Chat</TabsTrigger>
-                <TabsTrigger value="history">History</TabsTrigger>
+                <TabsTrigger value="create">{t('summarizer.tabs.create')}</TabsTrigger>
+                <TabsTrigger value="chat">{t('summarizer.tabs.chat')}</TabsTrigger>
+                <TabsTrigger value="history">{t('summarizer.tabs.history')}</TabsTrigger>
               </TabsList>
 
               <TabsContent value="create" className="space-y-6">
@@ -260,9 +262,9 @@ const PDFSummarizer = () => {
                 {!extractedText && (
                   <Card>
                     <CardHeader>
-                      <CardTitle>Upload PDF</CardTitle>
+                      <CardTitle>{t('summarizer.upload_card.title')}</CardTitle>
                       <CardDescription>
-                        Upload a PDF file to generate an AI-powered summary
+                        {t('summarizer.upload_card.description')}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -275,14 +277,14 @@ const PDFSummarizer = () => {
                 {extractedText && !summary && (
                   <Card>
                     <CardHeader>
-                      <CardTitle>Configure Summary</CardTitle>
+                      <CardTitle>{t('summarizer.config_card.title')}</CardTitle>
                       <CardDescription>
-                        Choose summary length and domain focus
+                        {t('summarizer.config_card.description')}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Summary Length</label>
+                        <label className="text-sm font-medium">{t('summarizer.config_card.length_label')}</label>
                         <Select
                           value={summaryType}
                           onValueChange={(value: any) => setSummaryType(value)}
@@ -300,7 +302,7 @@ const PDFSummarizer = () => {
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Domain Focus</label>
+                        <label className="text-sm font-medium">{t('summarizer.config_card.domain_label')}</label>
                         <Select
                           value={domainFocus}
                           onValueChange={(value: any) => setDomainFocus(value)}
@@ -320,7 +322,7 @@ const PDFSummarizer = () => {
                       {isGenerating && (
                         <div className="space-y-2">
                           <div className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground">Generating summary...</span>
+                            <span className="text-muted-foreground">{t('summarizer.config_card.generating')}</span>
                             <span className="font-medium">{generationProgress}%</span>
                           </div>
                           <Progress value={generationProgress} className="h-2" />
@@ -336,12 +338,12 @@ const PDFSummarizer = () => {
                         {isGenerating ? (
                           <>
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Generating Summary...
+                            {t('summarizer.config_card.generating')}
                           </>
                         ) : (
                           <>
                             <Sparkles className="w-4 h-4 mr-2" />
-                            Generate Summary
+                            {t('summarizer.config_card.generate_button')}
                           </>
                         )}
                       </Button>
@@ -355,26 +357,26 @@ const PDFSummarizer = () => {
                     <CardHeader>
                       <div className="flex items-center justify-between">
                         <div>
-                          <CardTitle>Summary</CardTitle>
+                          <CardTitle>{t('summarizer.result_card.title')}</CardTitle>
                           <CardDescription>
                             {summaryType} summary • {domainFocus} focus
                           </CardDescription>
                         </div>
                         <div className="flex gap-2 flex-wrap">
-                          <Button variant="outline" size="icon" onClick={handleCopySummary} title="Copy to clipboard">
+                          <Button variant="outline" size="icon" onClick={handleCopySummary} title={t('summarizer.result_card.copy_button')}>
                             <Copy className="w-4 h-4" />
                           </Button>
                           <Button variant="outline" size="sm" onClick={() => handleDownloadSummary('txt')}>
                             <Download className="w-4 h-4 mr-2" />
-                            TXT
+                            {t('summarizer.result_card.download_txt')}
                           </Button>
                           <Button variant="outline" size="sm" onClick={() => handleDownloadSummary('json')}>
                             <Download className="w-4 h-4 mr-2" />
-                            JSON
+                            {t('summarizer.result_card.download_json')}
                           </Button>
                           <Button variant="outline" size="sm" onClick={() => handleDownloadSummary('csv')}>
                             <Download className="w-4 h-4 mr-2" />
-                            CSV
+                            {t('summarizer.result_card.download_csv')}
                           </Button>
                           <Button
                             variant="outline"
@@ -383,7 +385,7 @@ const PDFSummarizer = () => {
                             title="Export to integrations"
                           >
                             <ExternalLink className="w-4 h-4 mr-2" />
-                            Export
+                            {t('summarizer.result_card.export')}
                           </Button>
                         </div>
                       </div>
@@ -402,15 +404,15 @@ const PDFSummarizer = () => {
               <TabsContent value="chat">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Chat with PDF</CardTitle>
-                    <CardDescription>Ask questions about your uploaded document</CardDescription>
+                    <CardTitle>{t('summarizer.chat_card.title')}</CardTitle>
+                    <CardDescription>{t('summarizer.chat_card.description')}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     {extractedText && currentPdfId ? (
                       <ChatInterface pdfId={currentPdfId} userId={user?.id || ''} />
                     ) : (
                       <div className="text-center py-12 text-muted-foreground">
-                        <p>Upload a PDF in the "Create Summary" tab to start chatting.</p>
+                        <p>{t('summarizer.chat_card.empty_state')}</p>
                       </div>
                     )}
                   </CardContent>

@@ -11,5 +11,188 @@
   "get_started": "Get started free",
   "features": "Features",
   "how_it_works": "How it works",
-  "pricing": "Pricing"
+  "hero": {
+    "badge": "AI-Powered Document Intelligence",
+    "title_start": "Chat with any",
+    "title_highlight": "PDF, Contract, or Report.",
+    "subtitle": "The AI-powered document assistant that summarizes legal contracts, analyzes financial reports, and extracts insights from academic papers in seconds.",
+    "upload_button": "Upload Document",
+    "start_free_button": "Start chatting free",
+    "free_text": "5 free chats daily • No credit card required",
+    "pill_pdf": "PDFs & Documents",
+    "pill_natural": "Natural Conversations",
+    "pill_instant": "Instant Answers"
+  },
+  "features_section": {
+    "title": "Document intelligence, reimagined",
+    "subtitle": "Stop skimming. Start understanding. Every feature designed to help you extract value from documents faster.",
+    "items": {
+      "natural_conversations": {
+        "title": "Natural Conversations",
+        "description": "Ask questions about your documents in plain English. Our AI understands context, nuance, and specific terminology for accurate answers."
+      },
+      "universal_format": {
+        "title": "Universal Format Support",
+        "description": "Upload PDFs, Word documents, PowerPoints, and text files. Perfect for legal contracts, financial statements, and research papers."
+      },
+      "instant_summaries": {
+        "title": "Instant Summaries",
+        "description": "Get concise summaries of long documents instantly. Choose from brief overviews to detailed breakdowns of key points and arguments."
+      },
+      "export_share": {
+        "title": "Export & Share",
+        "description": "Download your summaries and chat history as TXT or PDF. Share insights directly with your team via Slack, Notion, or email."
+      },
+      "security": {
+        "title": "Enterprise-Grade Security",
+        "description": "Your data is encrypted at rest and in transit. Documents are automatically processed and can be deleted immediately after use."
+      },
+      "multi_language": {
+        "title": "Multi-Language Support",
+        "description": "Upload documents in any language and chat in your preferred language. Break down language barriers in international business."
+      }
+    }
+  },
+  "how_it_works_section": {
+    "title": "How it works",
+    "subtitle": "From upload to insight in under 30 seconds",
+    "steps": {
+      "upload": {
+        "title": "Upload your document",
+        "description": "Drag and drop any PDF, PowerPoint, or Word document. We handle files up to 100MB."
+      },
+      "analyze": {
+        "title": "AI analyzes it",
+        "description": "Our AI reads and understands the full context, structure, and key information."
+      },
+      "chat": {
+        "title": "Start chatting",
+        "description": "Ask questions, request summaries, or explore specific sections naturally."
+      }
+    }
+  },
+  "pricing_section": {
+    "title": "Simple, transparent pricing",
+    "subtitle": "Save hours every week. One quick answer can save an hour of reading.",
+    "plans": {
+      "free": {
+        "name": "Free",
+        "period": "forever",
+        "description": "Perfect for trying it out",
+        "cta": "Start free",
+        "features": [
+          "5 document chats per day",
+          "Up to 50 pages per document",
+          "Basic export (TXT)",
+          "Standard response speed"
+        ]
+      },
+      "pro": {
+        "name": "Pro",
+        "period": "per month",
+        "description": "For power users",
+        "cta": "Get Pro",
+        "most_popular": "Most popular",
+        "features": [
+          "Unlimited document chats",
+          "Up to 200 pages per document",
+          "All export formats",
+          "Priority processing",
+          "Chat history saved",
+          "Slack & Notion integration"
+        ]
+      },
+      "credits": {
+        "name": "Credits",
+        "period": "per chat",
+        "description": "Pay as you go",
+        "cta": "Buy credits",
+        "features": [
+          "No monthly commitment",
+          "Up to 100 pages per document",
+          "All export formats",
+          "Priority processing",
+          "Credits never expire"
+        ]
+      }
+    },
+    "disclaimer": "All plans include monthly credits that reset. Buy extra credits anytime for $3-$30."
+  },
+  "footer": {
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "contact": "Contact",
+    "copyright": "© {{year}} DocChat. All rights reserved."
+  },
+  "dashboard_page": {
+    "welcome": "Welcome, {{name}}",
+    "subtitle": "Upload documents and start chatting with them",
+    "upload_button": "Upload Document",
+    "summarizer_button": "PDF Summarizer",
+    "open_button": "Open",
+    "loading": "Loading documents...",
+    "empty_title": "No documents yet",
+    "empty_desc": "Upload your first document to get started",
+    "delete_success": "Document deleted",
+    "delete_error": "Error deleting document"
+  },
+  "summarizer": {
+    "title": "PDF Summarizer",
+    "tabs": {
+      "create": "Create Summary",
+      "chat": "AI Chat",
+      "history": "History"
+    },
+    "upload_card": {
+      "title": "Upload PDF",
+      "description": "Upload a PDF file to generate an AI-powered summary"
+    },
+    "config_card": {
+      "title": "Configure Summary",
+      "description": "Choose summary length and domain focus",
+      "length_label": "Summary Length",
+      "domain_label": "Domain Focus",
+      "generate_button": "Generate Summary",
+      "generating": "Generating Summary..."
+    },
+    "result_card": {
+      "title": "Summary",
+      "copy_button": "Copy to clipboard",
+      "download_txt": "TXT",
+      "download_json": "JSON",
+      "download_csv": "CSV",
+      "export": "Export"
+    },
+    "chat_card": {
+      "title": "Chat with PDF",
+      "description": "Ask questions about your uploaded document",
+      "empty_state": "Upload a PDF in the \"Create Summary\" tab to start chatting."
+    }
+  },
+  "contact": {
+    "title": "Get in Touch",
+    "subtitle": "Have a question or feedback? We'd love to hear from you. Send us a message and we'll respond as soon as possible.",
+    "email_us": "Email Us",
+    "email_desc": "For general inquiries and support",
+    "response_time": "Response Time",
+    "response_desc": "We typically respond within 24 hours during business days.",
+    "location": "Location",
+    "back_home": "Back to home"
+  },
+  "auth": {
+    "welcome_back": "Welcome back",
+    "create_account": "Create your account",
+    "sign_in_desc": "Sign in to continue chatting with your documents",
+    "sign_up_desc": "Start chatting with your documents for free",
+    "full_name": "Full name",
+    "email": "Email address",
+    "password": "Password",
+    "forgot_password": "Forgot password?",
+    "sign_in_button": "Sign in",
+    "create_account_button": "Create account",
+    "continue_google": "Continue with Google",
+    "have_account": "Already have an account?",
+    "no_account": "Don't have an account?",
+    "terms_privacy": "By continuing, you agree to our {{terms}} and {{privacy}}"
+  }
 }

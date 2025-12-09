@@ -12,6 +12,7 @@ import { PlanBadge } from "@/components/dashboard/PlanBadge";
 import { CreditsDashboardWidget } from "@/components/dashboard/CreditsDashboardWidget";
 import { HeaderCreditsDisplay } from "@/components/pricing/HeaderCreditsDisplay";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useTranslation } from 'react-i18next';
 
 interface DocumentRecord {
   id: string;
@@ -32,6 +33,7 @@ const Dashboard = () => {
   const [loadingDocs, setLoadingDocs] = useState(true);
   const [showUpload, setShowUpload] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { t } = useTranslation();
 
   const getDisplayName = () => {
     if (profile?.display_name) return profile.display_name;
@@ -59,7 +61,7 @@ const Dashboard = () => {
 
     if (error) {
       toast({
-        title: "Error fetching documents",
+        title: t('dashboard_page.delete_error'),
         description: error.message,
         variant: "destructive",
       });
@@ -76,7 +78,7 @@ const Dashboard = () => {
 
     if (storageError) {
       toast({
-        title: "Error deleting file",
+        title: t('dashboard_page.delete_error'),
         description: storageError.message,
         variant: "destructive",
       });
@@ -90,15 +92,15 @@ const Dashboard = () => {
 
     if (dbError) {
       toast({
-        title: "Error deleting document",
+        title: t('dashboard_page.delete_error'),
         description: dbError.message,
         variant: "destructive",
       });
     } else {
       setDocuments(documents.filter((d) => d.id !== doc.id));
       toast({
-        title: "Document deleted",
-        description: "The document has been removed.",
+        title: t('dashboard_page.delete_success'),
+        description: t('dashboard_page.delete_success'),
       });
     }
   };
@@ -125,7 +127,7 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
+        <div className="animate-pulse text-muted-foreground">{t('dashboard_page.loading')}</div>
       </div>
     );
   }
@@ -139,7 +141,7 @@ const Dashboard = () => {
             <div className="w-9 h-9 rounded-lg accent-gradient flex items-center justify-center">
               <MessageSquare className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="font-serif text-xl font-semibold">DocChat</span>
+            <span className="font-serif text-xl font-semibold">{t('app_title')}</span>
           </div>
           
           {/* Desktop Header Actions */}
@@ -152,7 +154,7 @@ const Dashboard = () => {
             </Button>
             <Button variant="ghost" size="sm" onClick={handleSignOut}>
               <LogOut className="w-4 h-4 mr-2" />
-              Sign out
+              {t('logout')}
             </Button>
           </div>
 
@@ -178,11 +180,11 @@ const Dashboard = () => {
               <ThemeToggle />
               <Button variant="ghost" size="sm" onClick={() => navigate("/profile")}>
                 <Settings className="w-4 h-4 mr-2" />
-                Settings
+                {t('settings')}
               </Button>
               <Button variant="ghost" size="sm" onClick={handleSignOut}>
                 <LogOut className="w-4 h-4 mr-2" />
-                Sign out
+                {t('logout')}
               </Button>
             </div>
           </div>
@@ -194,10 +196,10 @@ const Dashboard = () => {
           {/* Welcome Section */}
           <div className="mb-6 md:mb-8">
             <h1 className="text-2xl md:text-3xl font-serif font-semibold mb-1">
-              Welcome, {getDisplayName()}
+              {t('dashboard_page.welcome', { name: getDisplayName() })}
             </h1>
             <p className="text-sm md:text-base text-muted-foreground">
-              Upload documents and start chatting with them
+              {t('dashboard_page.subtitle')}
             </p>
           </div>
 
@@ -210,11 +212,11 @@ const Dashboard = () => {
           <div className="mb-6 md:mb-8 flex flex-col sm:flex-row gap-3">
             <Button variant="hero" onClick={() => setShowUpload(true)} className="w-full sm:w-auto">
               <Plus className="w-4 h-4 mr-2" />
-              Upload Document
+              {t('dashboard_page.upload_button')}
             </Button>
             <Button variant="outline" onClick={() => navigate("/summarizer")} className="w-full sm:w-auto">
               <FileText className="w-4 h-4 mr-2" />
-              PDF Summarizer
+              {t('dashboard_page.summarizer_button')}
             </Button>
           </div>
 
@@ -224,9 +226,9 @@ const Dashboard = () => {
               <div className="w-full max-w-xl mx-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Upload Document</CardTitle>
+                    <CardTitle>{t('summarizer.upload_card.title')}</CardTitle>
                     <CardDescription>
-                      Upload a PDF, PowerPoint, or Word document to start chatting
+                      {t('summarizer.upload_card.description')}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -246,7 +248,7 @@ const Dashboard = () => {
           {/* Documents List */}
           {loadingDocs ? (
             <div className="text-center py-12 text-muted-foreground">
-              Loading documents...
+              {t('dashboard_page.loading')}
             </div>
           ) : documents.length === 0 ? (
             <Card className="border-dashed">
@@ -254,13 +256,13 @@ const Dashboard = () => {
                 <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-muted flex items-center justify-center">
                   <FileText className="w-8 h-8 text-muted-foreground" />
                 </div>
-                <h3 className="text-lg font-medium mb-2">No documents yet</h3>
+                <h3 className="text-lg font-medium mb-2">{t('dashboard_page.empty_title')}</h3>
                 <p className="text-muted-foreground mb-4">
-                  Upload your first document to get started
+                  {t('dashboard_page.empty_desc')}
                 </p>
                 <Button variant="hero" onClick={() => setShowUpload(true)}>
                   <Upload className="w-4 h-4 mr-2" />
-                  Upload Document
+                  {t('dashboard_page.upload_button')}
                 </Button>
               </CardContent>
             </Card>
@@ -295,7 +297,7 @@ const Dashboard = () => {
                           className="flex-1 sm:flex-none"
                         >
                           <MessageSquare className="w-4 h-4 mr-2" />
-                          Open
+                          {t('dashboard_page.open_button')}
                         </Button>
                         <Button
                           variant="ghost"

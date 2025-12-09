@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { MessageSquare, ArrowLeft, Mail, Send, MapPin, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useTranslation } from 'react-i18next';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 
 const Contact = () => {
+  const { t } = useTranslation();
 
   return (
     <div className="min-h-screen bg-background">
@@ -21,7 +23,7 @@ const Contact = () => {
           </Link>
           <Link to="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
             <ArrowLeft className="w-4 h-4" />
-            Back to home
+            {t('contact.back_home')}
           </Link>
         </div>
       </header>
@@ -29,10 +31,9 @@ const Contact = () => {
       <main className="container mx-auto px-4 py-16">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
-            <h1 className="font-serif text-4xl font-bold mb-4">Get in Touch</h1>
+            <h1 className="font-serif text-4xl font-bold mb-4">{t('contact.title')}</h1>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Have a question or feedback? We'd love to hear from you. Send us a message
-              and we'll respond as soon as possible.
+              {t('contact.subtitle')}
             </p>
           </div>
 
@@ -43,9 +44,9 @@ const Contact = () => {
                 <div className="w-12 h-12 rounded-xl accent-gradient flex items-center justify-center mb-4">
                   <Mail className="w-6 h-6 text-primary-foreground" />
                 </div>
-                <h3 className="font-semibold text-lg mb-2">Email Us</h3>
+                <h3 className="font-semibold text-lg mb-2">{t('contact.email_us')}</h3>
                 <p className="text-muted-foreground text-sm mb-3">
-                  For general inquiries and support
+                  {t('contact.email_desc')}
                 </p>
                 <a href="mailto:hello@docchat.com" className="text-primary hover:underline">
                   info@docchat.com
@@ -56,9 +57,9 @@ const Contact = () => {
                 <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center mb-4">
                   <Clock className="w-6 h-6 text-secondary-foreground" />
                 </div>
-                <h3 className="font-semibold text-lg mb-2">Response Time</h3>
+                <h3 className="font-semibold text-lg mb-2">{t('contact.response_time')}</h3>
                 <p className="text-muted-foreground text-sm">
-                  We typically respond within 24 hours during business days.
+                  {t('contact.response_desc')}
                 </p>
               </div>
 
@@ -66,7 +67,7 @@ const Contact = () => {
                 <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center mb-4">
                   <MapPin className="w-6 h-6 text-secondary-foreground" />
                 </div>
-                <h3 className="font-semibold text-lg mb-2">Location</h3>
+                <h3 className="font-semibold text-lg mb-2">{t('contact.location')}</h3>
                 <p className="text-muted-foreground text-sm">
                   San Francisco, CA<br />
                   United States

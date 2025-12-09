@@ -1,48 +1,51 @@
 import { FileText, MessageSquare, Download, Shield, Globe, Sparkles } from "lucide-react";
-
-const features = [
-  {
-    icon: MessageSquare,
-    title: "Natural Conversations",
-    description: "Ask questions about your documents in plain English. Our AI understands context, nuance, and specific terminology for accurate answers.",
-  },
-  {
-    icon: FileText,
-    title: "Universal Format Support",
-    description: "Upload PDFs, Word documents, PowerPoints, and text files. Perfect for legal contracts, financial statements, and research papers.",
-  },
-  {
-    icon: Sparkles,
-    title: "Instant Summaries",
-    description: "Get concise summaries of long documents instantly. Choose from brief overviews to detailed breakdowns of key points and arguments.",
-  },
-  {
-    icon: Download,
-    title: "Export & Share",
-    description: "Download your summaries and chat history as TXT or PDF. Share insights directly with your team via Slack, Notion, or email.",
-  },
-  {
-    icon: Shield,
-    title: "Enterprise-Grade Security",
-    description: "Your data is encrypted at rest and in transit. Documents are automatically processed and can be deleted immediately after use.",
-  },
-  {
-    icon: Globe,
-    title: "Multi-Language Support",
-    description: "Upload documents in any language and chat in your preferred language. Break down language barriers in international business.",
-  },
-];
+import { useTranslation } from 'react-i18next';
 
 const Features = () => {
+  const { t } = useTranslation();
+
+  const features = [
+    {
+      icon: MessageSquare,
+      title: t('features_section.items.natural_conversations.title'),
+      description: t('features_section.items.natural_conversations.description'),
+    },
+    {
+      icon: FileText,
+      title: t('features_section.items.universal_format.title'),
+      description: t('features_section.items.universal_format.description'),
+    },
+    {
+      icon: Sparkles,
+      title: t('features_section.items.instant_summaries.title'),
+      description: t('features_section.items.instant_summaries.description'),
+    },
+    {
+      icon: Download,
+      title: t('features_section.items.export_share.title'),
+      description: t('features_section.items.export_share.description'),
+    },
+    {
+      icon: Shield,
+      title: t('features_section.items.security.title'),
+      description: t('features_section.items.security.description'),
+    },
+    {
+      icon: Globe,
+      title: t('features_section.items.multi_language.title'),
+      description: t('features_section.items.multi_language.description'),
+    },
+  ];
+
   return (
     <section id="features" className="py-20 bg-background">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-serif mb-4">
-            Document intelligence, reimagined
+            {t('features_section.title')}
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Stop skimming. Start understanding. Every feature designed to help you extract value from documents faster.
+            {t('features_section.subtitle')}
           </p>
         </div>
 

@@ -11,5 +11,188 @@
   "get_started": "Empezar gratis",
   "features": "Características",
   "how_it_works": "Cómo funciona",
-  "pricing": "Precios"
+  "hero": {
+    "badge": "Inteligencia Documental con IA",
+    "title_start": "Chatea con cualquier",
+    "title_highlight": "PDF, Contrato o Informe.",
+    "subtitle": "El asistente documental con IA que resume contratos legales, analiza informes financieros y extrae información de trabajos académicos en segundos.",
+    "upload_button": "Subir Documento",
+    "start_free_button": "Empezar a chatear gratis",
+    "free_text": "5 chats gratis diarios • No requiere tarjeta de crédito",
+    "pill_pdf": "PDFs y Documentos",
+    "pill_natural": "Conversaciones Naturales",
+    "pill_instant": "Respuestas Instantáneas"
+  },
+  "features_section": {
+    "title": "Inteligencia documental, reinventada",
+    "subtitle": "Deja de hojear. Empieza a entender. Cada función diseñada para ayudarte a extraer valor de los documentos más rápido.",
+    "items": {
+      "natural_conversations": {
+        "title": "Conversaciones Naturales",
+        "description": "Haz preguntas sobre tus documentos en español sencillo. Nuestra IA entiende el contexto, los matices y la terminología específica para respuestas precisas."
+      },
+      "universal_format": {
+        "title": "Soporte de Formato Universal",
+        "description": "Sube PDFs, documentos de Word, PowerPoints y archivos de texto. Perfecto para contratos legales, estados financieros y trabajos de investigación."
+      },
+      "instant_summaries": {
+        "title": "Resúmenes Instantáneos",
+        "description": "Obtén resúmenes concisos de documentos largos al instante. Elige desde breves descripciones hasta desgloses detallados de puntos clave y argumentos."
+      },
+      "export_share": {
+        "title": "Exportar y Compartir",
+        "description": "Descarga tus resúmenes e historial de chat como TXT o PDF. Comparte información directamente con tu equipo a través de Slack, Notion o correo electrónico."
+      },
+      "security": {
+        "title": "Seguridad de Grado Empresarial",
+        "description": "Tus datos están encriptados en reposo y en tránsito. Los documentos se procesan automáticamente y se pueden eliminar inmediatamente después de su uso."
+      },
+      "multi_language": {
+        "title": "Soporte Multi-idioma",
+        "description": "Sube documentos en cualquier idioma y chatea en tu idioma preferido. Rompe las barreras del idioma en los negocios internacionales."
+      }
+    }
+  },
+  "how_it_works_section": {
+    "title": "Cómo funciona",
+    "subtitle": "Desde la carga hasta la información en menos de 30 segundos",
+    "steps": {
+      "upload": {
+        "title": "Sube tu documento",
+        "description": "Arrastra y suelta cualquier PDF, PowerPoint o documento de Word. Manejamos archivos de hasta 100MB."
+      },
+      "analyze": {
+        "title": "La IA lo analiza",
+        "description": "Nuestra IA lee y entiende el contexto completo, la estructura y la información clave."
+      },
+      "chat": {
+        "title": "Empieza a chatear",
+        "description": "Haz preguntas, solicita resúmenes o explora secciones específicas de forma natural."
+      }
+    }
+  },
+  "pricing_section": {
+    "title": "Precios simples y transparentes",
+    "subtitle": "Ahorra horas cada semana. Una respuesta rápida puede ahorrar una hora de lectura.",
+    "plans": {
+      "free": {
+        "name": "Gratis",
+        "period": "para siempre",
+        "description": "Perfecto para probarlo",
+        "cta": "Empezar gratis",
+        "features": [
+          "5 chats de documentos por día",
+          "Hasta 50 páginas por documento",
+          "Exportación básica (TXT)",
+          "Velocidad de respuesta estándar"
+        ]
+      },
+      "pro": {
+        "name": "Pro",
+        "period": "por mes",
+        "description": "Para usuarios avanzados",
+        "cta": "Obtener Pro",
+        "most_popular": "Más popular",
+        "features": [
+          "Chats de documentos ilimitados",
+          "Hasta 200 páginas por documento",
+          "Todos los formatos de exportación",
+          "Procesamiento prioritario",
+          "Historial de chat guardado",
+          "Integración con Slack y Notion"
+        ]
+      },
+      "credits": {
+        "name": "Créditos",
+        "period": "por chat",
+        "description": "Paga lo que uses",
+        "cta": "Comprar créditos",
+        "features": [
+          "Sin compromiso mensual",
+          "Hasta 100 páginas por documento",
+          "Todos los formatos de exportación",
+          "Procesamiento prioritario",
+          "Los créditos nunca caducan"
+        ]
+      }
+    },
+    "disclaimer": "Todos los planes incluyen créditos mensuales que se reinician. Compra créditos extra en cualquier momento por $3-$30."
+  },
+  "footer": {
+    "privacy": "Privacidad",
+    "terms": "Términos",
+    "contact": "Contacto",
+    "copyright": "© {{year}} DocChat. Todos los derechos reservados."
+  },
+  "dashboard_page": {
+    "welcome": "Bienvenido, {{name}}",
+    "subtitle": "Sube documentos y empieza a chatear con ellos",
+    "upload_button": "Subir Documento",
+    "summarizer_button": "Resumidor de PDF",
+    "open_button": "Abrir",
+    "loading": "Cargando documentos...",
+    "empty_title": "Aún no hay documentos",
+    "empty_desc": "Sube tu primer documento para empezar",
+    "delete_success": "Documento eliminado",
+    "delete_error": "Error al eliminar el documento"
+  },
+  "summarizer": {
+    "title": "Resumidor de PDF",
+    "tabs": {
+      "create": "Crear Resumen",
+      "chat": "Chat con IA",
+      "history": "Historial"
+    },
+    "upload_card": {
+      "title": "Subir PDF",
+      "description": "Sube un archivo PDF para generar un resumen impulsado por IA"
+    },
+    "config_card": {
+      "title": "Configurar Resumen",
+      "description": "Elige la longitud del resumen y el enfoque del dominio",
+      "length_label": "Longitud del Resumen",
+      "domain_label": "Enfoque del Dominio",
+      "generate_button": "Generar Resumen",
+      "generating": "Generando Resumen..."
+    },
+    "result_card": {
+      "title": "Resumen",
+      "copy_button": "Copiar al portapapeles",
+      "download_txt": "TXT",
+      "download_json": "JSON",
+      "download_csv": "CSV",
+      "export": "Exportar"
+    },
+    "chat_card": {
+      "title": "Chat con PDF",
+      "description": "Haz preguntas sobre tu documento subido",
+      "empty_state": "Sube un PDF en la pestaña \"Crear Resumen\" para empezar a chatear."
+    }
+  },
+  "contact": {
+    "title": "Ponte en Contacto",
+    "subtitle": "¿Tienes una pregunta o comentario? Nos encantaría escucharte. Envíanos un mensaje y te responderemos lo antes posible.",
+    "email_us": "Envíanos un Email",
+    "email_desc": "Para consultas generales y soporte",
+    "response_time": "Tiempo de Respuesta",
+    "response_desc": "Normalmente respondemos dentro de las 24 horas en días hábiles.",
+    "location": "Ubicación",
+    "back_home": "Volver al inicio"
+  },
+  "auth": {
+    "welcome_back": "Bienvenido de nuevo",
+    "create_account": "Crea tu cuenta",
+    "sign_in_desc": "Inicia sesión para continuar chateando con tus documentos",
+    "sign_up_desc": "Empieza a chatear con tus documentos gratis",
+    "full_name": "Nombre completo",
+    "email": "Dirección de correo electrónico",
+    "password": "Contraseña",
+    "forgot_password": "¿Olvidaste tu contraseña?",
+    "sign_in_button": "Iniciar sesión",
+    "create_account_button": "Crear cuenta",
+    "continue_google": "Continuar con Google",
+    "have_account": "¿Ya tienes una cuenta?",
+    "no_account": "¿No tienes una cuenta?",
+    "terms_privacy": "Al continuar, aceptas nuestros {{terms}} y {{privacy}}"
+  }
 }
