@@ -255,7 +255,7 @@ const PDFSummarizer = () => {
               </TabsList>
 
               <TabsContent value="create" className="space-y-6">
-                <UsageIndicator usage={dailyUsage} limit={3} plan={plan} />
+                <UsageIndicator usage={dailyUsage} plan={plan} />
                 {/* Upload Section */}
                 {!extractedText && (
                   <Card>
