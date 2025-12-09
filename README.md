@@ -1,73 +1,92 @@
-# Welcome to your Lovable project
+# DocChat - AI PDF Assistant
 
-## Project info
+DocChat is a powerful AI-powered document assistant that lets you chat with your PDFs and get instant summaries. Built with React, TypeScript, and Supabase, it features a robust subscription system integrated with Paystack.
 
-**URL**: https://lovable.dev/projects/75b9b6cd-487e-4a40-b8ac-c353856beb55
+## 🚀 Features
 
-## How can I edit this code?
+-   **Chat with PDF**: Interact intelligently with your documents using AI (LangChain + OpenAI/DeepSeek).
+-   **PDF Summarization**: Get quick summaries of your documents.
+-   **Subscription Plans**:
+    -   **Free**: 3 summaries/day.
+    -   **Basic**: 50 summaries/day.
+    -   **Pro**: Unlimited summaries, Advanced AI.
+    -   **Elite**: Unlimited Everything + Priority Support.
+-   **Secure Payments**: Integrated with **Paystack** for secure monthly/annual subscriptions.
+-   **Authentication**: Secure user authentication via Supabase Auth.
+-   **Responsive Design**: Beautiful UI built with TailwindCSS and Shadcn/UI.
+-   **Dark Mode**: Native dark mode support.
 
-There are several ways of editing your application.
+## 🛠 Tech Stack
 
-**Use Lovable**
+-   **Frontend**: React, Vite, TypeScript, TailwindCSS, Shadcn UI.
+-   **Backend**: Supabase (Database, Auth, Storage, Edge Functions).
+-   **AI/LLM**: LangChain, OpenAI / DeepSeek.
+-   **Payments**: Paystack (via `react-paystack` and Edge Functions).
+-   **PDF Processing**: `pdfjs-dist`.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/75b9b6cd-487e-4a40-b8ac-c353856beb55) and start prompting.
+## ⚙️ Prerequisites
 
-Changes made via Lovable will be committed automatically to this repo.
+-   [Node.js](https://nodejs.org/) (v18 or higher)
+-   [Supabase CLI](https://supabase.com/docs/guides/cli) (for local backend development)
 
-**Use your preferred IDE**
+## 📦 Installation
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+1.  **Clone the repository**:
+    ```bash
+    git clone https://github.com/yourusername/docchat.git
+    cd docchat
+    ```
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+2.  **Install dependencies**:
+    ```bash
+    npm install
+    ```
 
-Follow these steps:
+3.  **Environment Setup**:
+    Copy `ENV_TEMPLATE.md` content to a new `.env` file and fill in your keys:
+    ```env
+    VITE_SUPABASE_URL=your_supabase_url
+    VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_key
+    VITE_PAYSTACK_PUBLIC_KEY=your_paystack_public_key
+    PAYSTACK_SECRET_KEY=your_paystack_secret_key (Server-side only)
+    ```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+4.  **Run Development Server**:
+    ```bash
+    npm run dev
+    ```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## 💳 Paystack Integration Service
 
-# Step 3: Install the necessary dependencies.
-npm i
+The project is configured to use Paystack for subscriptions.
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+**Plan Configuration:**
+Reflected in `src/lib/paystack/paystackConfig.ts`:
+-   **Currency**: GHS
+-   **Basic**: GHS 105.00/mo (`PLN_nncrqdk5khubj5n`)
+-   **Pro**: GHS 225.00/mo (`PLN_2lek6n16s6q31nq`)
+-   **Elite**: GHS 435.00/mo (`PLN_soiwu6ho4ultenw`)
 
-**Edit a file directly in GitHub**
+**Webhooks**:
+Recurring charges are handled via the `paystack-webhook` Edge Function, which correctly identifies users by email for auto-renewals.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## ⚡ Supabase Edge Functions
 
-**Use GitHub Codespaces**
+The backend logic resides in `supabase/functions`:
+-   `process-pdf`: Extracts text from uploaded PDFs.
+-   `chat`: Handles the RAG (Retrieval Augmented Generation) chat flow.
+-   `summarize-pdf`: Generates document summaries.
+-   `initialize-paystack-transaction`: Initializes payments with plan codes.
+-   `paystack-webhook`: Handles payment success and subscription updates.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 🚀 Deployment
 
-## What technologies are used for this project?
+1.  **Frontend**: Deploy to Vercel, Netlify, or any static site host.
+2.  **Backend**: Deploy Edge Functions to Supabase:
+    ```bash
+    supabase functions deploy
+    ```
 
-This project is built with:
+## 📄 License
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/75b9b6cd-487e-4a40-b8ac-c353856beb55) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+This project is licensed under the MIT License.
