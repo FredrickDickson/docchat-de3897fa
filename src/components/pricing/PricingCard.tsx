@@ -49,6 +49,18 @@ export const PricingCard = ({
   };
 
   const initializePayment = usePaystackPayment(config);
+  
+  const handlePayment = () => {
+    (initializePayment as any)({
+      onSuccess: (response: any) => {
+        console.log('Subscription payment success:', response);
+        onSuccess(response);
+      },
+      onClose: () => {
+        console.log('Subscription payment closed');
+      }
+    });
+  };
 
   return (
     <Card className={`relative flex flex-col ${isPopular ? 'border-primary shadow-lg scale-105' : ''}`}>
@@ -80,9 +92,7 @@ export const PricingCard = ({
           className="w-full"
           variant={isCurrent ? "outline" : isPopular ? "default" : "secondary"}
           disabled={isCurrent || isLoading || !publicKey || !email}
-          onClick={() => {
-            (initializePayment as any)(onSuccess, () => { });
-          }}
+          onClick={handlePayment}
         >
           {isCurrent ? "Current Plan" : "Upgrade"}
         </Button>

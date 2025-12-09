@@ -83,7 +83,15 @@ export const CreditPackCard = ({
         <Button
           className="w-full"
           onClick={() => {
-            (initializePayment as any)(onSuccess, () => { });
+            (initializePayment as any)({
+              onSuccess: (response: any) => {
+                console.log('Credit payment success:', response);
+                onSuccess(response);
+              },
+              onClose: () => {
+                console.log('Credit payment closed');
+              }
+            });
           }}
           disabled={isLoading || !publicKey || !email}
         >
