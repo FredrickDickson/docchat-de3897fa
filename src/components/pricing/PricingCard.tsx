@@ -43,6 +43,7 @@ export const PricingCard = ({
     metadata: {
       plan: title.toLowerCase(),
       user_id: userId,
+      interval: 'monthly',
       custom_fields: []
     },
   };
