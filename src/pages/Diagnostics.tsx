@@ -134,23 +134,24 @@ export default function Diagnostics() {
     }
 
     // 6. Test Database Tables
-    const requiredTables = ['users', 'documents', 'pdf_chunks', 'chat_messages', 'summaries'];
+    const requiredTables = ['users', 'documents', 'pdf_chunks', 'chat_messages', 'summaries'] as const;
     
     for (const tableName of requiredTables) {
       try {
-        const { error } = await supabase.from(tableName).select('count').limit(1);
+        // Use type-safe table names
+        const { error } = await supabase.from(tableName).select('id').limit(1);
         newResults.push({
           name: `Database Table: ${tableName}`,
           status: error ? 'fail' : 'pass',
           message: error ? 'Table not found' : 'Table exists',
           details: error?.message || 'Accessible'
         });
-      } catch (err: any) {
+      } catch (err: unknown) {
         newResults.push({
           name: `Database Table: ${tableName}`,
           status: 'fail',
           message: 'Table error',
-          details: err.message
+          details: err instanceof Error ? err.message : 'Unknown error'
         });
       }
     }

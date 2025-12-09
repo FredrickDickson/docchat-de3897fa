@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { HeaderCreditsDisplay } from "@/components/pricing/HeaderCreditsDisplay";
 
 interface HeaderProps {
   showChat: boolean;
@@ -48,6 +49,7 @@ const Header = ({ showChat }: HeaderProps) => {
               <ThemeToggle />
               {!loading && user ? (
                 <div className="flex items-center gap-3">
+                  <HeaderCreditsDisplay />
                   <Link 
                     to="/profile" 
                     className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-accent transition-colors"

@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import DocumentUpload from "@/components/DocumentUpload";
 import { PlanBadge } from "@/components/dashboard/PlanBadge";
 import { CreditsDashboardWidget } from "@/components/dashboard/CreditsDashboardWidget";
+import { HeaderCreditsDisplay } from "@/components/pricing/HeaderCreditsDisplay";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface DocumentRecord {
@@ -133,10 +134,8 @@ const Dashboard = () => {
           </div>
           
           <div className="flex items-center gap-4">
+            <HeaderCreditsDisplay />
             <PlanBadge />
-            <span className="text-sm text-muted-foreground hidden sm:block">
-              {user?.email}
-            </span>
             <ThemeToggle />
             <Button variant="ghost" size="icon" onClick={() => navigate("/profile")}>
               <Settings className="w-4 h-4" />

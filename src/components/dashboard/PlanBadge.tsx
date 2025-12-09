@@ -41,12 +41,33 @@ export const PlanBadge = () => {
     );
   }
 
-  if (plan === 'pro') {
+  const planConfig: Record<string, { name: string; gradient: string; icon: typeof Crown }> = {
+    elite: {
+      name: 'Elite',
+      gradient: 'bg-gradient-to-r from-amber-500 to-orange-500',
+      icon: Crown
+    },
+    pro: {
+      name: 'Pro',
+      gradient: 'bg-gradient-to-r from-purple-500 to-pink-500',
+      icon: Crown
+    },
+    basic: {
+      name: 'Basic',
+      gradient: 'bg-gradient-to-r from-blue-500 to-cyan-500',
+      icon: Zap
+    }
+  };
+
+  const currentPlanConfig = planConfig[plan];
+
+  if (currentPlanConfig) {
+    const IconComponent = currentPlanConfig.icon;
     return (
       <div className="flex items-center gap-3">
-        <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 px-3 py-1">
-          <Crown className="w-3 h-3 mr-1" />
-          Pro
+        <Badge className={`${currentPlanConfig.gradient} text-white border-0 px-3 py-1`}>
+          <IconComponent className="w-3 h-3 mr-1" />
+          {currentPlanConfig.name}
         </Badge>
         <Button 
           variant="ghost" 

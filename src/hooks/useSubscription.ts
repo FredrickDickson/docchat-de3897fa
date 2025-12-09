@@ -51,23 +51,26 @@ export const useSubscription = (): SubscriptionState => {
     }
 
     try {
-      // Check Stripe subscription status
-      await refreshSubscription();
-
-      // Fetch local profile data
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('plan, daily_usage, usage_reset_at')
-        .eq('user_id', user.id)
+      // Fetch from users table (primary source of truth)
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('plan, daily_usage, usage_reset_at, subscription_renews_at')
+        .eq('id', user.id)
         .single();
 
-      if (error) throw error;
-
-      if (data) {
-        setPlan(data.plan as 'free' | 'basic' | 'pro' | 'elite');
-        setDailyUsage(data.daily_usage || 0);
-        setUsageResetAt(data.usage_reset_at);
+      if (userError && userError.code !== 'PGRST116') {
+        console.error('Error fetching user data:', userError);
       }
+
+      if (userData) {
+        setPlan(userData.plan as 'free' | 'basic' | 'pro' | 'elite');
+        setDailyUsage(userData.daily_usage || 0);
+        setUsageResetAt(userData.usage_reset_at);
+        setSubscriptionEnd(userData.subscription_renews_at);
+      }
+
+      // Also check subscription table for more details
+      await refreshSubscription();
     } catch (error) {
       console.error('Error fetching subscription:', error);
     } finally {
