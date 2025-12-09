@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -6,6 +7,7 @@ import { Send, Loader2, User, Bot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { useSubscription } from "@/hooks/useSubscription";
 
 interface Message {
   id: string;
@@ -19,13 +21,17 @@ interface ChatInterfaceProps {
   userId: string;
 }
 
+const FREE_DAILY_CHAT_LIMIT = 5;
+
 export const ChatInterface = ({ pdfId, userId }: ChatInterfaceProps) => {
+  const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const { plan, dailyUsage, incrementUsage } = useSubscription();
 
   // Fetch existing chat history from Supabase
   useEffect(() => {
@@ -107,6 +113,17 @@ export const ChatInterface = ({ pdfId, userId }: ChatInterfaceProps) => {
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
+    // Check if free user has exceeded daily limit
+    if (plan === 'free' && dailyUsage >= FREE_DAILY_CHAT_LIMIT) {
+      toast({
+        title: 'Daily limit reached',
+        description: 'You have used all your free daily chats. Upgrade to continue.',
+        variant: 'destructive',
+      });
+      navigate('/pricing');
+      return;
+    }
+
     const userMessage = input;
     setInput("");
     setIsLoading(true);
@@ -142,15 +159,29 @@ export const ChatInterface = ({ pdfId, userId }: ChatInterfaceProps) => {
             : msg
         )
       );
+      
+      // Increment daily usage after successful message
+      await incrementUsage();
     } catch (error: any) {
       console.error('Chat error:', error);
       // Remove temp messages on error
       setMessages(prev => prev.filter(msg => msg.id !== tempUserMsgId && msg.id !== tempAiMsgId));
-      toast({
-        title: "Error",
-        description: error.message || "Failed to get response from AI. Please try again.",
-        variant: "destructive",
-      });
+      
+      // Check for insufficient credits and redirect to pricing
+      if (error.message?.includes('INSUFFICIENT_CREDITS') || error.message?.includes('Insufficient credits')) {
+        toast({
+          title: "Insufficient credits",
+          description: "You have run out of credits. Please purchase more to continue.",
+          variant: "destructive",
+        });
+        navigate('/pricing');
+      } else {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to get response from AI. Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }

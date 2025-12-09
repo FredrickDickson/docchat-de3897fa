@@ -25,32 +25,32 @@ const samples = [
 
 export const SampleSummaries = () => {
   return (
-    <section className="py-24 bg-background">
+    <section className="py-16 sm:py-24 bg-background">
       <div className="container px-4 md:px-6">
-        <div className="grid gap-12 lg:grid-cols-2 items-center">
+        <div className="grid gap-8 lg:gap-12 lg:grid-cols-2 items-center">
           <div>
-            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl mb-6">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tighter md:text-4xl lg:text-5xl mb-4 sm:mb-6">
               See What's Possible
             </h2>
-            <p className="text-muted-foreground md:text-xl mb-8">
+            <p className="text-sm sm:text-base text-muted-foreground md:text-xl mb-6 sm:mb-8">
               From legal contracts to academic papers, our AI understands context and nuance. 
               Get accurate, readable summaries in seconds.
             </p>
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3 sm:gap-4">
               {samples.map((sample, index) => (
-                <div key={index} className="flex gap-4 p-4 rounded-lg border bg-card hover:shadow-md transition-shadow">
-                  <div className="mt-1">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                      <FileText className="h-5 w-5 text-primary" />
+                <div key={index} className="flex gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg border bg-card hover:shadow-md transition-shadow">
+                  <div className="mt-0.5 sm:mt-1 flex-shrink-0">
+                    <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-primary/10">
+                      <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                     </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-lg">{sample.title}</h3>
-                    <p className="text-sm text-muted-foreground mb-2">{sample.description}</p>
-                    <div className="flex gap-2 flex-wrap">
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-base sm:text-lg">{sample.title}</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-2">{sample.description}</p>
+                    <div className="flex gap-1.5 sm:gap-2 flex-wrap">
                       {sample.features.map((feature, i) => (
-                        <span key={i} className="inline-flex items-center text-xs font-medium text-primary bg-primary/5 px-2 py-1 rounded-full">
-                          <CheckCircle2 className="w-3 h-3 mr-1" />
+                        <span key={i} className="inline-flex items-center text-[10px] sm:text-xs font-medium text-primary bg-primary/5 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full">
+                          <CheckCircle2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" />
                           {feature}
                         </span>
                       ))}
@@ -59,8 +59,8 @@ export const SampleSummaries = () => {
                 </div>
               ))}
             </div>
-            <div className="mt-8">
-              <Button asChild size="lg">
+            <div className="mt-6 sm:mt-8">
+              <Button asChild size="lg" className="w-full sm:w-auto">
                 <Link to="/auth">Try It Yourself</Link>
               </Button>
             </div>

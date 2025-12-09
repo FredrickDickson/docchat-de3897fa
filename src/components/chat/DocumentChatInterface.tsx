@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useDocumentChat } from '@/hooks/useDocumentChat';
+import { useSubscription } from '@/hooks/useSubscription';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,16 +9,22 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2, Send, Bot, User, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
 
 interface DocumentChatInterfaceProps {
   documentId: string;
   documentName: string;
 }
 
+const FREE_DAILY_CHAT_LIMIT = 5;
+
 export const DocumentChatInterface = ({ documentId, documentName }: DocumentChatInterfaceProps) => {
+  const navigate = useNavigate();
   const { messages, isLoading, error, sendMessage } = useDocumentChat(documentId);
+  const { plan, dailyUsage, incrementUsage } = useSubscription();
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -27,13 +35,33 @@ export const DocumentChatInterface = ({ documentId, documentName }: DocumentChat
     e.preventDefault();
     if (!input.trim() || isLoading) return;
 
+    // Check if free user has exceeded daily limit
+    if (plan === 'free' && dailyUsage >= FREE_DAILY_CHAT_LIMIT) {
+      toast({
+        title: 'Daily limit reached',
+        description: 'You have used all your free daily chats. Upgrade to continue.',
+        variant: 'destructive',
+      });
+      navigate('/pricing');
+      return;
+    }
+
     const question = input;
     setInput('');
 
     try {
       await sendMessage(question);
-    } catch (err) {
-      // Error is handled by the hook
+      await incrementUsage();
+    } catch (err: any) {
+      // Redirect to pricing if insufficient credits
+      if (err.message?.includes('Insufficient credits') || err.message?.includes('INSUFFICIENT_CREDITS')) {
+        toast({
+          title: 'Insufficient credits',
+          description: 'You have run out of credits. Please purchase more to continue.',
+          variant: 'destructive',
+        });
+        navigate('/pricing');
+      }
     }
   };
 

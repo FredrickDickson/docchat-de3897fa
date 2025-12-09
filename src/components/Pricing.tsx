@@ -59,48 +59,48 @@ const Pricing = () => {
   };
 
   return (
-    <section id="pricing" className="py-20 bg-background">
+    <section id="pricing" className="py-16 sm:py-20 bg-background">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-serif mb-4">
+        <div className="text-center mb-10 sm:mb-16">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif mb-3 sm:mb-4">
             {t('pricing_section.title')}
           </h2>
-          <p className="text-muted-foreground max-w-xl mx-auto">
+          <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto px-2">
             {t('pricing_section.subtitle')}
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto">
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className={`relative p-6 rounded-2xl border transition-all duration-300 hover:-translate-y-1 ${
+              className={`relative p-5 sm:p-6 rounded-2xl border transition-all duration-300 hover:-translate-y-1 ${
                 plan.popular
                   ? "border-primary bg-card shadow-card"
                   : "border-border bg-card hover:shadow-card"
               }`}
             >
               {plan.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full accent-gradient text-primary-foreground text-xs font-semibold">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full accent-gradient text-primary-foreground text-xs font-semibold whitespace-nowrap">
                   {t('pricing_section.plans.pro.most_popular')}
                 </div>
               )}
 
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-1">{plan.name}</h3>
-                <p className="text-sm text-muted-foreground">{plan.description}</p>
+              <div className="mb-4 sm:mb-6">
+                <h3 className="text-base sm:text-lg font-semibold mb-1">{plan.name}</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground">{plan.description}</p>
               </div>
 
-              <div className="mb-6">
-                <span className="text-4xl font-serif font-bold">{plan.price}</span>
-                <span className="text-muted-foreground ml-2">/{plan.period}</span>
+              <div className="mb-4 sm:mb-6">
+                <span className="text-3xl sm:text-4xl font-serif font-bold">{plan.price}</span>
+                <span className="text-muted-foreground ml-2 text-sm">/{plan.period}</span>
               </div>
 
-              <ul className="space-y-3 mb-8">
+              <ul className="space-y-2 sm:space-y-3 mb-6 sm:mb-8">
                 {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                    <span className="text-sm">{feature}</span>
+                  <li key={feature} className="flex items-start gap-2 sm:gap-3">
+                    <Check className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0 mt-0.5" />
+                    <span className="text-xs sm:text-sm">{feature}</span>
                   </li>
                 ))}
               </ul>
@@ -108,6 +108,7 @@ const Pricing = () => {
               <Button 
                 variant={plan.variant} 
                 className="w-full"
+                size="sm"
                 onClick={() => handlePlanClick(plan.action)}
                 disabled={isLoading === plan.action}
               >
@@ -117,7 +118,7 @@ const Pricing = () => {
           ))}
         </div>
 
-        <p className="text-center text-sm text-muted-foreground mt-8">
+        <p className="text-center text-xs sm:text-sm text-muted-foreground mt-6 sm:mt-8 px-4">
           {t('pricing_section.disclaimer')}
         </p>
       </div>
