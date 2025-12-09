@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSummaryGeneration, SummaryType } from '@/hooks/useSummaryGeneration';
+import { useSubscription } from '@/hooks/useSubscription';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -14,8 +16,12 @@ interface SummaryGeneratorProps {
   documentName: string;
 }
 
+const FREE_DAILY_SUMMARY_LIMIT = 5;
+
 export const SummaryGenerator = ({ documentId, documentName }: SummaryGeneratorProps) => {
+  const navigate = useNavigate();
   const { isGenerating, error, summary, generateSummary, clearSummary } = useSummaryGeneration();
+  const { plan, dailyUsage, incrementUsage } = useSubscription();
   const [summaryType, setSummaryType] = useState<SummaryType>('standard');
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
@@ -27,8 +33,20 @@ export const SummaryGenerator = ({ documentId, documentName }: SummaryGeneratorP
   };
 
   const handleGenerate = async () => {
+    // Check if free user has exceeded daily limit
+    if (plan === 'free' && dailyUsage >= FREE_DAILY_SUMMARY_LIMIT) {
+      toast({
+        title: 'Daily limit reached',
+        description: 'You have used all your free daily summaries. Upgrade to continue.',
+        variant: 'destructive',
+      });
+      navigate('/pricing');
+      return;
+    }
+
     try {
       await generateSummary(documentId, summaryType);
+      await incrementUsage();
       toast({
         title: 'Summary Generated',
         description: `Used ${creditCosts[summaryType]} credits`,
