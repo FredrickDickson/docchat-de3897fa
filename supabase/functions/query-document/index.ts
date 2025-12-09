@@ -23,6 +23,25 @@ serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
+    // Check and deduct credits FIRST before making API call
+    console.log('Checking and deducting credits...');
+    const { data: creditData, error: creditError } = await supabase.rpc('deduct_credits', {
+      p_user_id: userId,
+      p_cost: 1
+    });
+
+    if (creditError) {
+      console.log('Credit error:', creditError);
+      if (creditError.message === 'INSUFFICIENT_CREDITS' || creditError.message?.includes('insufficient')) {
+        return new Response(
+          JSON.stringify({ error: 'INSUFFICIENT_CREDITS', required: 1 }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      throw creditError;
+    }
+    console.log('Credits deducted successfully');
+
     // Get all chunks for the document
     const { data: chunks, error: chunksError } = await supabase
       .from('pdf_chunks')
@@ -49,6 +68,7 @@ serve(async (req: Request) => {
       throw new Error('DEEPSEEK_API_KEY not configured');
     }
 
+    console.log('Calling DeepSeek API...');
     const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -78,19 +98,9 @@ serve(async (req: Request) => {
 
     const data = await response.json();
     const answer = data.choices[0].message.content;
+    console.log('DeepSeek response received');
 
-    // Deduct 1 credit for AI chat
-    const { error: creditError } = await supabase.rpc('deduct_credits', {
-      p_user_id: userId,
-      p_cost: 1
-    });
-
-    if (creditError) {
-      console.warn('Credit deduction failed:', creditError);
-      // Don't fail the request, just log the error
-    }
-
-    // Store chat message
+    // Store user message
     await supabase.from('chat_messages').insert({
       user_id: userId,
       pdf_id: documentId,
@@ -98,6 +108,7 @@ serve(async (req: Request) => {
       message: question
     });
 
+    // Store AI message
     await supabase.from('chat_messages').insert({
       user_id: userId,
       pdf_id: documentId,
@@ -127,7 +138,7 @@ serve(async (req: Request) => {
     return new Response(
       JSON.stringify({ error: (error as Error).message }),
       { 
-        status: (error as Error).message === 'INSUFFICIENT_CREDITS' ? 402 : 500,
+        status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Message {
@@ -14,31 +14,32 @@ export const useDocumentChat = (documentId: string) => {
   const [error, setError] = useState<string | null>(null);
 
   // Fetch existing messages
+  const fetchMessages = useCallback(async () => {
+    if (!documentId) return;
+
+    const { data, error } = await supabase
+      .from('chat_messages')
+      .select('*')
+      .eq('pdf_id', documentId)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching messages:', error);
+    } else {
+      const typedMessages: Message[] = (data || []).map(msg => ({
+        ...msg,
+        sender: msg.sender as 'user' | 'ai'
+      }));
+      setMessages(typedMessages);
+    }
+  }, [documentId]);
+
   useEffect(() => {
     if (!documentId) return;
 
-    const fetchMessages = async () => {
-      const { data, error } = await supabase
-        .from('chat_messages')
-        .select('*')
-        .eq('pdf_id', documentId)
-        .order('created_at', { ascending: true });
-
-      if (error) {
-        console.error('Error fetching messages:', error);
-      } else {
-        // Type assertion to ensure sender is properly typed
-        const typedMessages: Message[] = (data || []).map(msg => ({
-          ...msg,
-          sender: msg.sender as 'user' | 'ai'
-        }));
-        setMessages(typedMessages);
-      }
-    };
-
     fetchMessages();
 
-    // Subscribe to new messages
+    // Subscribe to new messages for real-time updates
     const channel = supabase
       .channel(`chat-${documentId}`)
       .on(
@@ -50,7 +51,14 @@ export const useDocumentChat = (documentId: string) => {
           filter: `pdf_id=eq.${documentId}`
         },
         (payload) => {
-          setMessages((prev) => [...prev, payload.new as Message]);
+          const newMessage = payload.new as Message;
+          setMessages((prev) => {
+            // Avoid duplicates
+            if (prev.some(m => m.id === newMessage.id)) {
+              return prev;
+            }
+            return [...prev, { ...newMessage, sender: newMessage.sender as 'user' | 'ai' }];
+          });
         }
       )
       .subscribe();
@@ -58,13 +66,22 @@ export const useDocumentChat = (documentId: string) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [documentId]);
+  }, [documentId, fetchMessages]);
 
   const sendMessage = async (question: string) => {
     if (!question.trim()) return;
 
     setIsLoading(true);
     setError(null);
+
+    // Optimistically add user message
+    const tempUserMessage: Message = {
+      id: `temp-${Date.now()}`,
+      sender: 'user',
+      message: question,
+      created_at: new Date().toISOString()
+    };
+    setMessages(prev => [...prev, tempUserMessage]);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -88,10 +105,17 @@ export const useDocumentChat = (documentId: string) => {
         throw queryError;
       }
 
-      // Messages are added via realtime subscription
+      // Remove temp message and refresh to get real messages from DB
+      setMessages(prev => prev.filter(m => m.id !== tempUserMessage.id));
+      
+      // Fetch latest messages to ensure we have the real ones
+      await fetchMessages();
+
       return data;
 
     } catch (err: any) {
+      // Remove temp message on error
+      setMessages(prev => prev.filter(m => m.id !== tempUserMessage.id));
       setError(err.message);
       throw err;
     } finally {
@@ -103,6 +127,7 @@ export const useDocumentChat = (documentId: string) => {
     messages,
     isLoading,
     error,
-    sendMessage
+    sendMessage,
+    refreshMessages: fetchMessages
   };
 };

@@ -181,42 +181,41 @@ const DocumentDetail = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-card sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" asChild>
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+              <Button variant="ghost" size="icon" asChild className="shrink-0">
                 <Link to="/dashboard">
                   <ArrowLeft className="w-4 h-4" />
                 </Link>
               </Button>
-              <div>
-                <h1 className="text-2xl font-bold">{document.name}</h1>
-                <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-lg sm:text-2xl font-bold truncate">{document.name}</h1>
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-1 text-xs sm:text-sm text-muted-foreground">
                   <span>{formatFileSize(document.file_size)}</span>
-                  <span>•</span>
-                  <span>{formatDate(document.created_at)}</span>
-                  <span>•</span>
-                  <Badge variant={document.status === 'completed' ? 'default' : 'secondary'}>
+                  <span className="hidden sm:inline">•</span>
+                  <span className="hidden sm:inline">{formatDate(document.created_at)}</span>
+                  <Badge variant={document.status === 'completed' ? 'default' : 'secondary'} className="text-xs">
                     {document.status}
                   </Badge>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={handleDownload}>
-                <Download className="w-4 h-4 mr-2" />
-                Download
+            <div className="flex items-center gap-2 self-end sm:self-auto">
+              <Button variant="outline" size="sm" onClick={handleDownload} className="text-xs sm:text-sm">
+                <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Download</span>
               </Button>
               
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="outline" size="sm" disabled={isDeleting}>
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Delete
+                  <Button variant="outline" size="sm" disabled={isDeleting} className="text-xs sm:text-sm">
+                    <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Delete</span>
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent>
+                <AlertDialogContent className="mx-4 sm:mx-auto">
                   <AlertDialogHeader>
                     <AlertDialogTitle>Delete Document?</AlertDialogTitle>
                     <AlertDialogDescription>
@@ -237,23 +236,23 @@ const DocumentDetail = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        <div className="flex flex-col lg:grid lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Main Area - Chat & Summary */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 order-2 lg:order-1">
             <Tabs defaultValue="chat" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="chat" className="flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4" />
+                <TabsTrigger value="chat" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                  <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   Chat
                 </TabsTrigger>
-                <TabsTrigger value="summary" className="flex items-center gap-2">
-                  <FileText className="w-4 h-4" />
+                <TabsTrigger value="summary" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                  <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   Summary
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="chat" className="mt-6">
+              <TabsContent value="chat" className="mt-4 sm:mt-6">
                 {document.status === 'completed' || document.status === 'ready' ? (
                   <DocumentChatInterface
                     documentId={document.id}
@@ -261,10 +260,10 @@ const DocumentDetail = () => {
                   />
                 ) : (
                   <Card>
-                    <CardContent className="py-12 text-center">
-                      <Loader2 className="w-12 h-12 mx-auto mb-4 animate-spin text-primary" />
-                      <h3 className="text-lg font-medium mb-2">Processing Document</h3>
-                      <p className="text-muted-foreground">
+                    <CardContent className="py-8 sm:py-12 text-center">
+                      <Loader2 className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-4 animate-spin text-primary" />
+                      <h3 className="text-base sm:text-lg font-medium mb-2">Processing Document</h3>
+                      <p className="text-sm text-muted-foreground">
                         Your document is being processed. Chat will be available once processing is complete.
                       </p>
                     </CardContent>
@@ -272,7 +271,7 @@ const DocumentDetail = () => {
                 )}
               </TabsContent>
 
-              <TabsContent value="summary" className="mt-6">
+              <TabsContent value="summary" className="mt-4 sm:mt-6">
                 {document.status === 'completed' || document.status === 'ready' ? (
                   <SummaryGenerator
                     documentId={document.id}
@@ -280,10 +279,10 @@ const DocumentDetail = () => {
                   />
                 ) : (
                   <Card>
-                    <CardContent className="py-12 text-center">
-                      <Loader2 className="w-12 h-12 mx-auto mb-4 animate-spin text-primary" />
-                      <h3 className="text-lg font-medium mb-2">Processing Document</h3>
-                      <p className="text-muted-foreground">
+                    <CardContent className="py-8 sm:py-12 text-center">
+                      <Loader2 className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-4 animate-spin text-primary" />
+                      <h3 className="text-base sm:text-lg font-medium mb-2">Processing Document</h3>
+                      <p className="text-sm text-muted-foreground">
                         Your document is being processed. Summary generation will be available once processing is complete.
                       </p>
                     </CardContent>
@@ -294,14 +293,14 @@ const DocumentDetail = () => {
           </div>
 
           {/* Sidebar - Credits & Info */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6 order-1 lg:order-2">
             {/* Credits Widget */}
             <CreditsDashboardWidget />
 
-            {/* Document Info */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Document Info</CardTitle>
+            {/* Document Info - Collapsed on mobile */}
+            <Card className="hidden sm:block">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Document Info</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
                 <div>
@@ -325,25 +324,25 @@ const DocumentDetail = () => {
               </CardContent>
             </Card>
 
-            {/* Usage Tips */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Tips</CardTitle>
-                <CardDescription>Get the most out of your document</CardDescription>
+            {/* Usage Tips - Hidden on mobile */}
+            <Card className="hidden lg:block">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Tips</CardTitle>
+                <CardDescription className="text-xs">Get the most out of your document</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
                 <div className="flex items-start gap-2">
                   <MessageSquare className="w-4 h-4 mt-0.5 text-primary shrink-0" />
                   <div>
-                    <div className="font-medium">Ask specific questions</div>
-                    <div className="text-muted-foreground">Get better answers by being specific</div>
+                    <div className="font-medium text-sm">Ask specific questions</div>
+                    <div className="text-xs text-muted-foreground">Get better answers by being specific</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
                   <FileText className="w-4 h-4 mt-0.5 text-primary shrink-0" />
                   <div>
-                    <div className="font-medium">Choose summary type</div>
-                    <div className="text-muted-foreground">Brief for quick overview, detailed for in-depth</div>
+                    <div className="font-medium text-sm">Choose summary type</div>
+                    <div className="text-xs text-muted-foreground">Brief for quick overview, detailed for in-depth</div>
                   </div>
                 </div>
               </CardContent>
