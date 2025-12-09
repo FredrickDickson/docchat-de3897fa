@@ -254,7 +254,7 @@ const DocumentDetail = () => {
               </TabsList>
 
               <TabsContent value="chat" className="mt-6">
-                {document.status === 'completed' ? (
+                {document.status === 'completed' || document.status === 'ready' ? (
                   <DocumentChatInterface
                     documentId={document.id}
                     documentName={document.name}
@@ -273,7 +273,7 @@ const DocumentDetail = () => {
               </TabsContent>
 
               <TabsContent value="summary" className="mt-6">
-                {document.status === 'completed' ? (
+                {document.status === 'completed' || document.status === 'ready' ? (
                   <SummaryGenerator
                     documentId={document.id}
                     documentName={document.name}

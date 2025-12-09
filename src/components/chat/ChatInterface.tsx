@@ -5,12 +5,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Loader2, User, Bot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { chatWithDocument, isPuterAILoaded } from "@/lib/langchainChat";
+import { Badge } from "@/components/ui/badge";
 
 interface Message {
   id: string;
   sender: 'user' | 'ai';
   message: string;
+  created_at?: string;
 }
 
 interface ChatInterfaceProps {
@@ -22,43 +23,80 @@ export const ChatInterface = ({ pdfId, userId }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [documentText, setDocumentText] = useState<string>("");
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // Fetch document text on mount
+  // Fetch existing chat history from Supabase
   useEffect(() => {
-    const fetchDocumentText = async () => {
+    const fetchChatHistory = async () => {
+      if (!pdfId || !userId) {
+        setIsLoadingHistory(false);
+        return;
+      }
+
       try {
-        // Try files table first
-        const { data: fileData } = await supabase
-          .from('files')
-          .select('extracted_text')
-          .eq('id', pdfId)
-          .maybeSingle();
-
-        if (fileData?.extracted_text) {
-          setDocumentText(fileData.extracted_text);
-          return;
-        }
-
-        // Try pdf_chunks table
-        const { data: chunks } = await supabase
-          .from('pdf_chunks')
-          .select('chunk_text')
+        const { data, error } = await supabase
+          .from('chat_messages')
+          .select('*')
           .eq('pdf_id', pdfId)
-          .order('page_number');
+          .eq('user_id', userId)
+          .order('created_at', { ascending: true });
 
-        if (chunks && chunks.length > 0) {
-          setDocumentText(chunks.map(c => c.chunk_text).join('\n\n'));
+        if (error) {
+          console.error('Error fetching chat history:', error);
+        } else if (data) {
+          const typedMessages: Message[] = data.map(msg => ({
+            id: msg.id,
+            sender: msg.sender as 'user' | 'ai',
+            message: msg.message,
+            created_at: msg.created_at || undefined
+          }));
+          setMessages(typedMessages);
         }
       } catch (error) {
-        console.error('Error fetching document text:', error);
+        console.error('Error fetching chat history:', error);
+      } finally {
+        setIsLoadingHistory(false);
       }
     };
 
-    fetchDocumentText();
-  }, [pdfId]);
+    fetchChatHistory();
+
+    // Subscribe to new messages for real-time updates
+    const channel = supabase
+      .channel(`chat-${pdfId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_messages',
+          filter: `pdf_id=eq.${pdfId}`
+        },
+        (payload) => {
+          const newMsg = payload.new as any;
+          // Only add if it belongs to this user
+          if (newMsg.user_id === userId) {
+            setMessages(prev => {
+              // Check if message already exists
+              if (prev.some(m => m.id === newMsg.id)) return prev;
+              return [...prev, {
+                id: newMsg.id,
+                sender: newMsg.sender as 'user' | 'ai',
+                message: newMsg.message,
+                created_at: newMsg.created_at
+              }];
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [pdfId, userId]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -67,43 +105,47 @@ export const ChatInterface = ({ pdfId, userId }: ChatInterfaceProps) => {
   }, [messages]);
 
   const handleSend = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() || isLoading) return;
 
     const userMessage = input;
     setInput("");
     setIsLoading(true);
 
-    const userMsgId = Math.random().toString();
-    const aiMsgId = Math.random().toString();
+    // Optimistically add user message with temp ID
+    const tempUserMsgId = `temp-user-${Date.now()}`;
+    const tempAiMsgId = `temp-ai-${Date.now()}`;
     
-    // Add user message
-    setMessages(prev => [...prev, { id: userMsgId, sender: 'user', message: userMessage }]);
-    
-    // Add loading AI message
-    setMessages(prev => [...prev, { id: aiMsgId, sender: 'ai', message: '' }]);
+    setMessages(prev => [...prev, { id: tempUserMsgId, sender: 'user', message: userMessage }]);
+    setMessages(prev => [...prev, { id: tempAiMsgId, sender: 'ai', message: '' }]);
 
     try {
-      // Use LangChain via edge function for chat
-      const response = await chatWithDocument(pdfId, userMessage, userId);
+      // Call the edge function which stores messages and uses DeepSeek
+      const { data, error } = await supabase.functions.invoke('query-document', {
+        body: {
+          documentId: pdfId,
+          question: userMessage,
+          userId: userId
+        }
+      });
+
+      if (error) throw error;
       
-      // Update AI message with response
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      // Update AI message with response (real messages will come via realtime)
       setMessages(prev => 
         prev.map(msg => 
-          msg.id === aiMsgId 
-            ? { ...msg, message: response }
+          msg.id === tempAiMsgId 
+            ? { ...msg, message: data.answer }
             : msg
         )
       );
     } catch (error: any) {
       console.error('Chat error:', error);
-      // Update AI message with error
-      setMessages(prev => 
-        prev.map(msg => 
-          msg.id === aiMsgId 
-            ? { ...msg, message: `Error: ${error.message || 'Failed to get response from AI'}` }
-            : msg
-        )
-      );
+      // Remove temp messages on error
+      setMessages(prev => prev.filter(msg => msg.id !== tempUserMsgId && msg.id !== tempAiMsgId));
       toast({
         title: "Error",
         description: error.message || "Failed to get response from AI. Please try again.",
@@ -114,14 +156,28 @@ export const ChatInterface = ({ pdfId, userId }: ChatInterfaceProps) => {
     }
   };
 
+  if (isLoadingHistory) {
+    return (
+      <div className="flex flex-col h-[600px] border rounded-lg bg-background items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary mb-2" />
+        <p className="text-sm text-muted-foreground">Loading chat history...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-[600px] border rounded-lg bg-background">
+      <div className="px-4 py-2 border-b flex items-center justify-between">
+        <span className="text-sm font-medium">Chat with Document</span>
+        <Badge variant="outline" className="text-xs">1 credit per message</Badge>
+      </div>
       <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
         <div className="space-y-4">
           {messages.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
               <Bot className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>Ask a question about this document to get started.</p>
+              <p className="text-xs mt-2">Chat history is automatically saved.</p>
             </div>
           )}
           {messages.map((msg) => (

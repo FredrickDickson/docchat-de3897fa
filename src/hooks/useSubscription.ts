@@ -111,9 +111,18 @@ export const useSubscription = (): SubscriptionState => {
     };
   }, [user, refreshSubscription]);
 
+  // Plan-based daily limits
+  const PLAN_LIMITS: Record<string, number | null> = {
+    'free': 3,
+    'basic': 10,
+    'pro': null, // Unlimited
+    'elite': null, // Unlimited
+  };
+
   const checkLimit = () => {
-    if (plan === 'pro') return false;
-    return dailyUsage >= 3;
+    const limit = PLAN_LIMITS[plan];
+    if (limit === null) return false; // No limit for pro/elite
+    return dailyUsage >= limit;
   };
 
   const incrementUsage = async () => {
