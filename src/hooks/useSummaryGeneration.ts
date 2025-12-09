@@ -43,6 +43,15 @@ export const useSummaryGeneration = () => {
         throw summaryError;
       }
 
+      // Check for error in response data (edge function returns 200 with error property)
+      if (data?.error) {
+        if (data.error === 'INSUFFICIENT_CREDITS') {
+          const creditCosts = { brief: 5, standard: 10, detailed: 25 };
+          throw new Error(`Insufficient credits. You need ${creditCosts[summaryType]} credits for a ${summaryType} summary.`);
+        }
+        throw new Error(data.error);
+      }
+
       setSummary(data);
       return data;
 
