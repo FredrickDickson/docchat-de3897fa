@@ -51,8 +51,16 @@ export const SummaryGenerator = ({ documentId, documentName }: SummaryGeneratorP
         title: 'Summary Generated',
         description: `Used ${creditCosts[summaryType]} credits`,
       });
-    } catch (err) {
-      // Error is handled by the hook
+    } catch (err: any) {
+      // Redirect to pricing if insufficient credits
+      if (err.message?.includes('Insufficient credits') || err.message?.includes('INSUFFICIENT_CREDITS')) {
+        toast({
+          title: 'Insufficient credits',
+          description: `You need ${creditCosts[summaryType]} credits for this summary. Please purchase more.`,
+          variant: 'destructive',
+        });
+        navigate('/pricing');
+      }
     }
   };
 
