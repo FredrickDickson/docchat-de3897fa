@@ -5,6 +5,17 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
+// Extend Window interface for Puter.js
+declare global {
+  interface Window {
+    puter?: {
+      ai?: {
+        chat: (prompt: string, options?: { stream?: boolean }) => Promise<string | AsyncIterable<{ text?: string }>>;
+      };
+    };
+  }
+}
+
 /**
  * Extract text from an image using LangChain OCR via edge function
  * @param imageDataURL - Base64 data URL of the image

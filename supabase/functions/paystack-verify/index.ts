@@ -83,108 +83,110 @@ serve(async (req) => {
       status: 'success',
       paystack_data: verifyData.data,
       plan: metadata?.plan,
-      credits: metadata?.credits
-    });
+      credits: metadata?.credits,
+      interval: metadata?.interval || 'monthly',
+      verified_at: new Date().toISOString()
+    }, { onConflict: 'reference' });
 
     log(`Transaction verified for User ${userId}`);
 
     // Grant Value
-    if (metadata.plan) {
+    if (metadata.plan && metadata.plan !== 'free') {
       log(`Updating plan to: ${metadata.plan}`);
 
-      // Strategy: Verify update success by checking returned rows.
-      let planUpdated = false;
-
-      // 1. Try updating by 'user_id'
-      const res1 = await supabase
-        .from('profiles')
-        .update({ plan: metadata.plan })
-        .eq('user_id', userId)
-        .select();
-
-      if (res1.data && res1.data.length > 0) {
-        log(`Updated plan via user_id.`);
-        planUpdated = true;
+      const plan = metadata.plan;
+      const isAnnual = metadata.interval === 'annual';
+      
+      // Calculate subscription period
+      const now = new Date();
+      const periodEnd = new Date(now);
+      if (isAnnual) {
+        periodEnd.setFullYear(periodEnd.getFullYear() + 1);
       } else {
-        if (res1.error) log(`Update user_id error: ${res1.error.message}`);
-        else log(`Update user_id returned 0 rows.`);
+        periodEnd.setMonth(periodEnd.getMonth() + 1);
       }
 
-      // 2. If not updated, try 'id'
-      if (!planUpdated) {
-        log('Trying update by id...');
-        const res2 = await supabase
-          .from('profiles')
-          .update({ plan: metadata.plan })
-          .eq('id', userId)
-          .select();
+      // Calculate monthly credits based on plan
+      const monthlyCreditsMap: Record<string, number> = {
+        'free': 3,
+        'basic': 200,
+        'pro': 600,
+        'elite': 1500
+      };
+      const monthlyCredits = monthlyCreditsMap[plan] ?? 3;
 
-        if (res2.data && res2.data.length > 0) {
-          log(`Updated plan via id.`);
-          planUpdated = true;
-        } else {
-          if (res2.error) log(`Update id error: ${res2.error.message}`);
-          else log(`Update id returned 0 rows.`);
-        }
+      // Update users table (primary source of truth)
+      const { error: userUpdateError } = await supabase
+        .from('users')
+        .update({
+          plan: plan,
+          monthly_credits: monthlyCredits,
+          subscription_renews_at: periodEnd.toISOString()
+        })
+        .eq('id', userId);
+
+      if (userUpdateError) {
+        log(`Error updating users table: ${userUpdateError.message}`);
+      } else {
+        log(`Updated users table with plan ${plan} and ${monthlyCredits} credits`);
       }
 
-      // 3. Fallback to 'users' table (legacy)
-      if (!planUpdated) {
-        const res3 = await supabase.from('users').update({ plan: metadata.plan }).eq('id', userId).select();
-        if (res3.data && res3.data.length > 0) planUpdated = true;
+      // Also update profiles table for backward compatibility
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ plan: plan })
+        .eq('user_id', userId);
+
+      if (profileError) {
+        log(`Error updating profiles: ${profileError.message}`);
       }
 
-      if (!planUpdated) {
-        throw new Error(`Could not update plan. Profile for user ${userId} not found or update failed.`);
-      }
+      // Update/create subscription record
+      await supabase
+        .from('subscriptions')
+        .upsert({
+          user_id: userId,
+          plan: plan,
+          status: 'active',
+          current_period_start: now.toISOString(),
+          current_period_end: periodEnd.toISOString(),
+          updated_at: now.toISOString()
+        }, { onConflict: 'user_id' });
+
+      log(`Subscription activated for user ${userId}`);
     }
 
     if (metadata.credits) {
       const credits = Number(metadata.credits);
-      log(`Adding ${credits} credits`);
+      log(`Adding ${credits} extra credits`);
 
-      let creditsUpdated = false;
+      // Use the RPC function to add credits
+      const { error: creditError } = await supabase.rpc('add_extra_credits', {
+        p_user_id: userId,
+        p_amount: credits,
+        p_description: `Purchased ${credits} credits via Paystack`
+      });
 
-      // Try 'users' table
-      const { data: userData } = await supabase.from('users').select('extra_credits').eq('id', userId).single();
-      if (userData) {
-        const newTotal = (userData.extra_credits || 0) + credits;
-        const res = await supabase.from('users').update({ extra_credits: newTotal }).eq('id', userId).select();
-        if (res.data && res.data.length > 0) creditsUpdated = true;
-      }
-
-      // Try 'profiles' table
-      if (!creditsUpdated) {
-        // Try by user_id
-        let { data: pData } = await supabase.from('profiles').select('*').eq('user_id', userId).single();
-        let key = 'user_id';
-        if (!pData) {
-          const res = await supabase.from('profiles').select('*').eq('id', userId).single();
-          pData = res.data;
-          key = 'id';
+      if (creditError) {
+        log(`RPC add_extra_credits error: ${creditError.message}`);
+        
+        // Fallback: Direct update
+        const { data: userData } = await supabase
+          .from('users')
+          .select('extra_credits')
+          .eq('id', userId)
+          .single();
+        
+        if (userData) {
+          const newTotal = (userData.extra_credits || 0) + credits;
+          await supabase
+            .from('users')
+            .update({ extra_credits: newTotal })
+            .eq('id', userId);
+          log(`Fallback: Updated extra_credits to ${newTotal}`);
         }
-
-        if (pData) {
-          // Assume column 'credits' or 'extra_credits' exists?
-          // Migration 15_fix_summaries introduced 'credits_used' in summaries.
-          // Pricing display uses 'extra_credits' from 'users' table.
-          // If profiles has a credits field, we use it.
-          // We'll try 'extra_credits' first, then 'credits'.
-
-          // Optimistic update attempts
-          const newTotal = (pData.extra_credits || pData.credits || 0) + credits;
-
-          let res = await supabase.from('profiles').update({ extra_credits: newTotal }).eq(key, userId).select();
-          if (res.error) {
-            res = await supabase.from('profiles').update({ credits: newTotal }).eq(key, userId).select();
-          }
-
-          if (res.data && res.data.length > 0) creditsUpdated = true;
-        }
-      }
-
-      if (!creditsUpdated && !userData) {
-        throw new Error(`Could not find user record (users/profiles) to add credits.`);
+      } else {
+        log(`Successfully added ${credits} extra credits via RPC`);
       }
     }
 

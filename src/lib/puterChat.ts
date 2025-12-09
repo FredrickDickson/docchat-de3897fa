@@ -3,8 +3,16 @@
  * Client-side AI chat functionality using Puter.js (free, no API key required)
  */
 
-// Import to get the Window interface with puter declaration
-import '@/lib/ocr';
+// Extend Window interface for Puter.js
+declare global {
+  interface Window {
+    puter?: {
+      ai?: {
+        chat: (prompt: string, options?: { stream?: boolean }) => Promise<string | AsyncIterable<{ text?: string }>>;
+      };
+    };
+  }
+}
 
 interface StreamChunk {
   text?: string;

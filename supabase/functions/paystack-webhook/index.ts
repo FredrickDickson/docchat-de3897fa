@@ -116,12 +116,13 @@ serve(async (req) => {
           }
 
           // Calculate monthly credits based on plan
-          const monthlyCredits = {
+          const monthlyCreditsMap: Record<string, number> = {
             'free': 3,
             'basic': 200,
             'pro': 600,
             'elite': 1500
-          }[plan] || 3;
+          };
+          const monthlyCredits = monthlyCreditsMap[plan as string] ?? 3;
 
           // Update subscription
           await supabase
@@ -217,10 +218,11 @@ serve(async (req) => {
     return new Response(JSON.stringify({ received: true }), {
       headers: { 'Content-Type': 'application/json' },
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Webhook error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       {
         status: 500,
         headers: { 'Content-Type': 'application/json' },

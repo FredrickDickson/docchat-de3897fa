@@ -285,6 +285,54 @@ export type Database = {
           },
         ]
       }
+      payment_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          credits: number | null
+          currency: string
+          id: string
+          interval: string
+          paystack_data: Json | null
+          plan: string
+          reference: string
+          status: string
+          updated_at: string
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          credits?: number | null
+          currency?: string
+          id?: string
+          interval: string
+          paystack_data?: Json | null
+          plan: string
+          reference: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          credits?: number | null
+          currency?: string
+          id?: string
+          interval?: string
+          paystack_data?: Json | null
+          plan?: string
+          reference?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       pdf_chunks: {
         Row: {
           chunk_text: string
@@ -358,6 +406,9 @@ export type Database = {
           current_period_end: string | null
           current_period_start: string | null
           id: string
+          paystack_customer_code: string | null
+          paystack_email_token: string | null
+          paystack_subscription_code: string | null
           plan: string | null
           status: string | null
           stripe_customer_id: string | null
@@ -371,6 +422,9 @@ export type Database = {
           current_period_end?: string | null
           current_period_start?: string | null
           id?: string
+          paystack_customer_code?: string | null
+          paystack_email_token?: string | null
+          paystack_subscription_code?: string | null
           plan?: string | null
           status?: string | null
           stripe_customer_id?: string | null
@@ -384,6 +438,9 @@ export type Database = {
           current_period_end?: string | null
           current_period_start?: string | null
           id?: string
+          paystack_customer_code?: string | null
+          paystack_email_token?: string | null
+          paystack_subscription_code?: string | null
           plan?: string | null
           status?: string | null
           stripe_customer_id?: string | null
@@ -403,42 +460,67 @@ export type Database = {
       }
       summaries: {
         Row: {
+          chunk_count: number | null
           cost_usd: number | null
           created_at: string | null
+          credits_used: number | null
+          document_id: string | null
           domain: string | null
           id: string
+          langchain_metadata: Json | null
+          model_used: string | null
           pdf_name: string | null
           pdf_size_mb: number | null
+          processing_method: string | null
           summary_length: string | null
           summary_text: string | null
           tokens_used: number | null
           user_id: string | null
         }
         Insert: {
+          chunk_count?: number | null
           cost_usd?: number | null
           created_at?: string | null
+          credits_used?: number | null
+          document_id?: string | null
           domain?: string | null
           id?: string
+          langchain_metadata?: Json | null
+          model_used?: string | null
           pdf_name?: string | null
           pdf_size_mb?: number | null
+          processing_method?: string | null
           summary_length?: string | null
           summary_text?: string | null
           tokens_used?: number | null
           user_id?: string | null
         }
         Update: {
+          chunk_count?: number | null
           cost_usd?: number | null
           created_at?: string | null
+          credits_used?: number | null
+          document_id?: string | null
           domain?: string | null
           id?: string
+          langchain_metadata?: Json | null
+          model_used?: string | null
           pdf_name?: string | null
           pdf_size_mb?: number | null
+          processing_method?: string | null
           summary_length?: string | null
           summary_text?: string | null
           tokens_used?: number | null
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "summaries_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "summaries_user_id_fkey"
             columns: ["user_id"]
@@ -448,16 +530,43 @@ export type Database = {
           },
         ]
       }
+      user_analytics: {
+        Row: {
+          created_at: string | null
+          credits_used: number | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          credits_used?: number | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          credits_used?: number | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           avatar_url: string | null
           created_at: string | null
           daily_usage: number
           email: string | null
-          extra_credits: number
+          extra_credits: number | null
           full_name: string | null
           id: string
-          monthly_credits: number
+          monthly_credits: number | null
           plan: string
           subscription_renews_at: string | null
           updated_at: string | null
@@ -468,10 +577,10 @@ export type Database = {
           created_at?: string | null
           daily_usage?: number
           email?: string | null
-          extra_credits?: number
+          extra_credits?: number | null
           full_name?: string | null
           id: string
-          monthly_credits?: number
+          monthly_credits?: number | null
           plan?: string
           subscription_renews_at?: string | null
           updated_at?: string | null
@@ -482,10 +591,10 @@ export type Database = {
           created_at?: string | null
           daily_usage?: number
           email?: string | null
-          extra_credits?: number
+          extra_credits?: number | null
           full_name?: string | null
           id?: string
-          monthly_credits?: number
+          monthly_credits?: number | null
           plan?: string
           subscription_renews_at?: string | null
           updated_at?: string | null
@@ -498,6 +607,40 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_extra_credits: {
+        Args: { p_amount: number; p_description?: string; p_user_id: string }
+        Returns: undefined
+      }
+      deduct_credits: {
+        Args: { p_cost: number; p_user_id: string }
+        Returns: string
+      }
+      get_daily_usage: {
+        Args: { p_days?: number; p_user_id: string }
+        Returns: {
+          date: string
+          total_credits: number
+          total_events: number
+        }[]
+      }
+      get_top_documents: {
+        Args: { p_limit?: number; p_user_id: string }
+        Returns: {
+          document_id: string
+          document_name: string
+          total_credits: number
+          total_interactions: number
+        }[]
+      }
+      get_total_credits: { Args: { p_user_id: string }; Returns: number }
+      get_user_analytics: {
+        Args: { p_end_date?: string; p_start_date?: string; p_user_id: string }
+        Returns: {
+          event_type: string
+          total_credits: number
+          total_events: number
+        }[]
+      }
       increment_daily_usage: {
         Args: { user_id_param: string }
         Returns: undefined
@@ -516,6 +659,7 @@ export type Database = {
         }[]
       }
       reset_daily_usage: { Args: never; Returns: undefined }
+      reset_monthly_credits: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
@@ -532,116 +676,116 @@ type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-  | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-  : never = never,
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
-  ? R
-  : never
+    ? R
+    : never
   : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-    DefaultSchema["Views"])
-  ? (DefaultSchema["Tables"] &
-    DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-      Row: infer R
-    }
-  ? R
-  : never
-  : never
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-  | keyof DefaultSchema["Tables"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-    Insert: infer I
-  }
-  ? I
-  : never
+      Insert: infer I
+    }
+    ? I
+    : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-    Insert: infer I
-  }
-  ? I
-  : never
-  : never
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-  | keyof DefaultSchema["Tables"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-    Update: infer U
-  }
-  ? U
-  : never
+      Update: infer U
+    }
+    ? U
+    : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-    Update: infer U
-  }
-  ? U
-  : never
-  : never
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-  | keyof DefaultSchema["Enums"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-  ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-  : never
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-  | keyof DefaultSchema["CompositeTypes"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-  ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-  : never
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
 
 export const Constants = {
   public: {
