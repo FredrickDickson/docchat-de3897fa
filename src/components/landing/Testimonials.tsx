@@ -28,36 +28,36 @@ const testimonials = [
 
 export const Testimonials = () => {
   return (
-    <section className="py-24 bg-secondary/30">
+    <section className="py-16 sm:py-24 bg-secondary/30">
       <div className="container px-4 md:px-6">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+        <div className="text-center mb-10 sm:mb-16">
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tighter md:text-4xl lg:text-5xl">
             Loved by Professionals
           </h2>
-          <p className="mx-auto mt-4 max-w-[700px] text-muted-foreground md:text-xl">
+          <p className="mx-auto mt-3 sm:mt-4 max-w-[700px] text-sm sm:text-base text-muted-foreground md:text-xl px-2">
             Join thousands of users who are saving time and working smarter with DocChat.
           </p>
         </div>
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:gap-6 md:gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {testimonials.map((testimonial, index) => (
             <Card key={index} className="bg-background border-none shadow-lg">
-              <CardHeader className="flex flex-row items-center gap-4 pb-4">
-                <Avatar>
+              <CardHeader className="flex flex-row items-center gap-3 sm:gap-4 pb-3 sm:pb-4">
+                <Avatar className="w-10 h-10 sm:w-12 sm:h-12">
                   <AvatarImage src={testimonial.avatar} alt={testimonial.name} />
                   <AvatarFallback>{testimonial.name[0]}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col">
-                  <p className="font-semibold">{testimonial.name}</p>
-                  <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                  <p className="font-semibold text-sm sm:text-base">{testimonial.name}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">{testimonial.role}</p>
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="flex mb-4">
+              <CardContent className="pt-0">
+                <div className="flex mb-3 sm:mb-4">
                   {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-primary text-primary" />
+                    <Star key={i} className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-primary text-primary" />
                   ))}
                 </div>
-                <p className="text-muted-foreground leading-relaxed">
+                <p className="text-sm text-muted-foreground leading-relaxed">
                   "{testimonial.content}"
                 </p>
               </CardContent>

@@ -53,7 +53,8 @@ const Header = ({ showChat }: HeaderProps) => {
               </a>
             </nav>
 
-            <div className="flex items-center gap-3">
+            {/* Desktop controls */}
+            <div className="hidden md:flex items-center gap-3">
               <LanguageSwitcher />
               <ThemeToggle />
               {!loading && user ? (
@@ -69,7 +70,7 @@ const Header = ({ showChat }: HeaderProps) => {
                         {getDisplayName().charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="hidden sm:inline text-sm font-medium">
+                    <span className="text-sm font-medium">
                       {getDisplayName()}
                     </span>
                   </Link>
@@ -91,28 +92,28 @@ const Header = ({ showChat }: HeaderProps) => {
 
             {/* Mobile Menu */}
             <div className="md:hidden flex items-center gap-2">
-              <LanguageSwitcher />
               <ThemeToggle />
               <Sheet>
                 <SheetTrigger asChild>
                   <Button variant="ghost" size="icon">
-                    <Menu className="h-6 w-6" />
+                    <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent>
-                  <div className="flex flex-col gap-6 mt-8">
-                    <nav className="flex flex-col gap-4">
-                      <a href="#features" className="text-lg font-medium hover:text-primary transition-colors">
+                <SheetContent side="right" className="w-[280px]">
+                  <div className="flex flex-col gap-6 mt-6">
+                    <nav className="flex flex-col gap-3">
+                      <a href="#features" className="text-base font-medium hover:text-primary transition-colors py-2">
                         {t('features')}
                       </a>
-                      <a href="#how-it-works" className="text-lg font-medium hover:text-primary transition-colors">
+                      <a href="#how-it-works" className="text-base font-medium hover:text-primary transition-colors py-2">
                         {t('how_it_works')}
                       </a>
-                      <a href="#pricing" className="text-lg font-medium hover:text-primary transition-colors">
+                      <a href="#pricing" className="text-base font-medium hover:text-primary transition-colors py-2">
                         {t('pricing')}
                       </a>
                     </nav>
-                    <div className="flex flex-col gap-3">
+                    <div className="border-t pt-4 flex flex-col gap-3">
+                      <LanguageSwitcher />
                       {!loading && user ? (
                         <>
                           <HeaderCreditsDisplay />
