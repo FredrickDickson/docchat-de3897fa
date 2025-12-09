@@ -7,21 +7,21 @@ const testimonials = [
     name: "Sarah Johnson",
     role: "Legal Associate",
     content: "DocChat has completely transformed how I review contracts. What used to take hours now takes minutes. The accuracy of the summaries is impressive.",
-    avatar: "/placeholder.svg",
+    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face",
     rating: 5
   },
   {
     name: "Michael Chen",
     role: "Research Scientist",
     content: "The ability to chat with my research papers is a game changer. I can quickly extract key findings and methodologies without reading every single page.",
-    avatar: "/placeholder.svg",
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
     rating: 5
   },
   {
     name: "Emily Rodriguez",
     role: "Student",
     content: "I use this for all my course readings. The summaries are concise and help me study much more efficiently. Highly recommended for students!",
-    avatar: "/placeholder.svg",
+    avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
     rating: 5
   }
 ];

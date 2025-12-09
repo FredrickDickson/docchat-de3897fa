@@ -64,20 +64,10 @@ export const PlanBadge = () => {
   if (currentPlanConfig) {
     const IconComponent = currentPlanConfig.icon;
     return (
-      <div className="flex items-center gap-3">
-        <Badge className={`${currentPlanConfig.gradient} text-white border-0 px-3 py-1`}>
-          <IconComponent className="w-3 h-3 mr-1" />
-          {currentPlanConfig.name}
-        </Badge>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={handleManageSubscription}
-          disabled={portalLoading}
-        >
-          {portalLoading ? "Loading..." : "Manage"}
-        </Button>
-      </div>
+      <Badge className={`${currentPlanConfig.gradient} text-white border-0 px-3 py-1`}>
+        <IconComponent className="w-3 h-3 mr-1" />
+        {currentPlanConfig.name}
+      </Badge>
     );
   }
 

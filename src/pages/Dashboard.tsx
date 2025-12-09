@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FileText, Upload, Trash2, MessageSquare, Clock, LogOut, Plus, Settings } from "lucide-react";
+import { FileText, Upload, Trash2, MessageSquare, Clock, LogOut, Plus, Settings, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import DocumentUpload from "@/components/DocumentUpload";
@@ -24,11 +25,19 @@ interface DocumentRecord {
 
 const Dashboard = () => {
   const { user, loading, signOut } = useAuth();
+  const { profile } = useProfile();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [documents, setDocuments] = useState<DocumentRecord[]>([]);
   const [loadingDocs, setLoadingDocs] = useState(true);
   const [showUpload, setShowUpload] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const getDisplayName = () => {
+    if (profile?.display_name) return profile.display_name;
+    if (user?.email) return user.email.split('@')[0];
+    return 'User';
+  };
 
   useEffect(() => {
     if (!loading && !user) {
@@ -124,7 +133,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border bg-card">
+      <header className="border-b border-border bg-card sticky top-0 z-40">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-lg accent-gradient flex items-center justify-center">
@@ -133,7 +142,8 @@ const Dashboard = () => {
             <span className="font-serif text-xl font-semibold">DocChat</span>
           </div>
           
-          <div className="flex items-center gap-4">
+          {/* Desktop Header Actions */}
+          <div className="hidden md:flex items-center gap-4">
             <HeaderCreditsDisplay />
             <PlanBadge />
             <ThemeToggle />
@@ -145,15 +155,48 @@ const Dashboard = () => {
               Sign out
             </Button>
           </div>
+
+          {/* Mobile Menu Button */}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="md:hidden"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </Button>
         </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-border bg-card p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <HeaderCreditsDisplay />
+              <PlanBadge />
+            </div>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <Button variant="ghost" size="sm" onClick={() => navigate("/profile")}>
+                <Settings className="w-4 h-4 mr-2" />
+                Settings
+              </Button>
+              <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign out
+              </Button>
+            </div>
+          </div>
+        )}
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-6 md:py-8">
         <div className="max-w-4xl mx-auto">
           {/* Welcome Section */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-serif font-semibold mb-2">Your Documents</h1>
-            <p className="text-muted-foreground">
+          <div className="mb-6 md:mb-8">
+            <h1 className="text-2xl md:text-3xl font-serif font-semibold mb-1">
+              Welcome, {getDisplayName()}
+            </h1>
+            <p className="text-sm md:text-base text-muted-foreground">
               Upload documents and start chatting with them
             </p>
           </div>
@@ -164,12 +207,12 @@ const Dashboard = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="mb-8 flex gap-3">
-            <Button variant="hero" onClick={() => setShowUpload(true)}>
+          <div className="mb-6 md:mb-8 flex flex-col sm:flex-row gap-3">
+            <Button variant="hero" onClick={() => setShowUpload(true)} className="w-full sm:w-auto">
               <Plus className="w-4 h-4 mr-2" />
               Upload Document
             </Button>
-            <Button variant="outline" onClick={() => navigate("/summarizer")}>
+            <Button variant="outline" onClick={() => navigate("/summarizer")} className="w-full sm:w-auto">
               <FileText className="w-4 h-4 mr-2" />
               PDF Summarizer
             </Button>
@@ -225,28 +268,31 @@ const Dashboard = () => {
             <div className="grid gap-4">
               {documents.map((doc) => (
                 <Card key={doc.id} className="hover:shadow-card transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                        <FileText className="w-6 h-6 text-primary" />
-                      </div>
-                      
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-medium truncate">{doc.name}</h3>
-                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                          <span>{formatFileSize(doc.file_size)}</span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {formatDate(doc.created_at)}
-                          </span>
+                  <CardContent className="p-3 md:p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                          <FileText className="w-5 h-5 md:w-6 md:h-6 text-primary" />
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium truncate text-sm md:text-base">{doc.name}</h3>
+                          <div className="flex items-center gap-2 md:gap-3 text-xs md:text-sm text-muted-foreground">
+                            <span>{formatFileSize(doc.file_size)}</span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {formatDate(doc.created_at)}
+                            </span>
+                          </div>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 ml-13 sm:ml-0">
                         <Button
                           variant="hero"
                           size="sm"
                           onClick={() => navigate(`/document/${doc.id}`)}
+                          className="flex-1 sm:flex-none"
                         >
                           <MessageSquare className="w-4 h-4 mr-2" />
                           Open
