@@ -33,8 +33,8 @@ DocChat is a powerful AI-powered document assistant that lets you chat with your
 
 1.  **Clone the repository**:
     ```bash
-    git clone https://github.com/yourusername/docchat.git
-    cd docchat
+    git clone https://github.com/FredrickDickson/docchat-de3897fa.git
+    cd docchat-de3897fa
     ```
 
 2.  **Install dependencies**:
@@ -63,9 +63,9 @@ The project is configured to use Paystack for subscriptions.
 **Plan Configuration:**
 Reflected in `src/lib/paystack/paystackConfig.ts`:
 -   **Currency**: GHS
--   **Basic**: GHS 105.00/mo (`PLN_nncrqdk5khubj5n`)
--   **Pro**: GHS 225.00/mo (`PLN_2lek6n16s6q31nq`)
--   **Elite**: GHS 435.00/mo (`PLN_soiwu6ho4ultenw`)
+-   **Basic**: GHS 105.00/mo 
+-   **Pro**: GHS 225.00/mo 
+-   **Elite**: GHS 435.00/mo 
 
 **Webhooks**:
 Recurring charges are handled via the `paystack-webhook` Edge Function, which correctly identifies users by email for auto-renewals.
