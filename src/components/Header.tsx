@@ -15,10 +15,10 @@ import {
 } from "@/components/ui/sheet";
 
 interface HeaderProps {
-  showChat: boolean;
+  showChat?: boolean;
 }
 
-const Header = ({ showChat }: HeaderProps) => {
+const Header = ({ showChat = false }: HeaderProps) => {
   const { t } = useTranslation();
   const { user, loading } = useAuth();
   const { profile } = useProfile();
