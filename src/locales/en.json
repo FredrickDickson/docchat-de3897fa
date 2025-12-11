@@ -193,6 +193,6 @@
     "continue_google": "Continue with Google",
     "have_account": "Already have an account?",
     "no_account": "Don't have an account?",
-    "terms_privacy": "By continuing, you agree to our {{terms}} and {{privacy}}"
+    "terms_privacy": "By continuing, you agree to our <terms>Terms</terms> and <privacy>Privacy</privacy>"
   }
 }

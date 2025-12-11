@@ -94,7 +94,6 @@
         "cta": "Obtener Pro",
         "most_popular": "Más popular",
         "features": [
-
           "Hasta 200 páginas por documento",
           "Todos los formatos de exportación",
           "Procesamiento prioritario",
@@ -193,6 +192,6 @@
     "continue_google": "Continuar con Google",
     "have_account": "¿Ya tienes una cuenta?",
     "no_account": "¿No tienes una cuenta?",
-    "terms_privacy": "Al continuar, aceptas nuestros {{terms}} y {{privacy}}"
+    "terms_privacy": "Al continuar, aceptas nuestros <terms>Términos</terms> y <privacy>Privacidad</privacy>"
   }
 }
