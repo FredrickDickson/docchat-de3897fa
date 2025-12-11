@@ -19,9 +19,7 @@ const Auth = () => {
   const [name, setName] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
-
-  // Google sign-in removed from active use
-  const { user, loading: authLoading /* signInWithGoogle */ } = useAuth();
+  const { user, loading: authLoading } = useAuth(); // removed Google
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -83,22 +81,22 @@ const Auth = () => {
     }
   };
 
-  // GOOGLE SIGN-IN IS DISABLED
-  /*
-  const handleGoogleSignIn = async () => {
-    setIsLoading(true);
-    try {
-      await signInWithGoogle();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to sign in with Google",
-        variant: "destructive",
-      });
-      setIsLoading(false);
-    }
-  };
-  */
+  // Google Sign-in FULLY REMOVED
+  //
+  // const handleGoogleSignIn = async () => {
+  //   setIsLoading(true);
+  //   try {
+  //     await signInWithGoogle();
+  //   } catch (error: any) {
+  //     toast({
+  //       title: "Error",
+  //       description: error.message || "Failed to sign in with Google",
+  //       variant: "destructive",
+  //     });
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   if (authLoading) {
     return (
@@ -110,28 +108,36 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-background flex">
+      {/* Left side - Branding */}
       <div className="hidden lg:flex lg:w-1/2 accent-gradient p-12 flex-col justify-between">
-        <Link to="/" className="flex items-center gap-2 text-primary-foreground">
-          <div className="w-10 h-10 rounded-lg bg-background/20 flex items-center justify-center">
-            <MessageSquare className="w-6 h-6" />
-          </div>
-          <span className="font-serif text-2xl font-semibold">DocChat</span>
-        </Link>
+        <div>
+          <Link to="/" className="flex items-center gap-2 text-primary-foreground">
+            <div className="w-10 h-10 rounded-lg bg-background/20 flex items-center justify-center">
+              <MessageSquare className="w-6 h-6" />
+            </div>
+            <span className="font-serif text-2xl font-semibold">DocChat</span>
+          </Link>
+        </div>
 
         <div className="space-y-6">
           <h1 className="font-serif text-4xl font-bold text-primary-foreground leading-tight">
             Chat with any document in seconds
           </h1>
           <p className="text-primary-foreground/80 text-lg">
-            Upload PDFs, presentations, and documents. Get instant answers, summaries, and insights.
+            Upload PDFs, presentations, and documents. Get instant answers, summaries, and insights through natural conversation.
           </p>
         </div>
 
         <div className="flex items-center gap-8 text-primary-foreground/70 text-sm">
-          <span>100+ page support</span>•<span>Multiple formats</span>•<span>Secure & private</span>
+          <span>100+ page support</span>
+          <span>•</span>
+          <span>Multiple formats</span>
+          <span>•</span>
+          <span>Secure & private</span>
         </div>
       </div>
 
+      {/* Right side - Auth form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
         <div className="w-full max-w-md space-y-8">
           <div className="lg:hidden mb-8">
@@ -220,6 +226,8 @@ const Auth = () => {
             </Button>
           </form>
 
+          {/* Google Sign-in Button Removed */}
+          {/* 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <Separator />
@@ -229,8 +237,7 @@ const Auth = () => {
             </div>
           </div>
 
-          {/* GOOGLE BUTTON DISABLED */}
-          {/* <Button
+          <Button
             type="button"
             variant="outline"
             size="lg"
@@ -238,9 +245,10 @@ const Auth = () => {
             onClick={handleGoogleSignIn}
             disabled={isLoading}
           >
-            …
-            {isLoading ? "Signing in..." : t('auth.continue_google')}
-          </Button> */}
+            <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24"> … </svg>
+            Continue with Google
+          </Button>
+          */}
 
           <p className="text-center text-sm text-muted-foreground">
             {isLogin ? t('auth.no_account') : t('auth.have_account')}{" "}
