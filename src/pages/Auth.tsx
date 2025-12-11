@@ -82,20 +82,20 @@ const Auth = () => {
   };
 //commented out the Google Sign in 
   
-  const handleGoogleSignIn = async () => {
-    setIsLoading(true);
-    try {
-      await signInWithGoogle();
-      // Note: OAuth redirect will handle navigation
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to sign in with Google",
-        variant: "destructive",
-      });
-      setIsLoading(false);
-    }
-  };
+  // const handleGoogleSignIn = async () => {
+  //   setIsLoading(true);
+  //   try {
+  //     await signInWithGoogle();
+  //     // Note: OAuth redirect will handle navigation
+  //   } catch (error: any) {
+  //     toast({
+  //       title: "Error",
+  //       description: error.message || "Failed to sign in with Google",
+  //       variant: "destructive",
+  //     });
+  //     setIsLoading(false);
+  //   }
+  // };
   
 
   if (authLoading) {
