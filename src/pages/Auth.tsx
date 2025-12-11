@@ -81,7 +81,7 @@ const Auth = () => {
     }
   };
 //commented out the Google Sign in 
-  /*
+  
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
@@ -96,7 +96,7 @@ const Auth = () => {
       setIsLoading(false);
     }
   };
-  */
+  
 
   if (authLoading) {
     return (
@@ -228,7 +228,6 @@ const Auth = () => {
             </Button>
           </form>
 
-          {/*
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <Separator />
@@ -266,7 +265,6 @@ const Auth = () => {
             </svg>
             {isLoading ? "Signing in..." : t('auth.continue_google')}
           </Button>
-          */}
 
           <p className="text-center text-sm text-muted-foreground">
             {isLogin ? t('auth.no_account') : t('auth.have_account')}{" "}
