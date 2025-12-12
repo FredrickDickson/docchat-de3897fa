@@ -84,7 +84,7 @@ serve(async (req: Request) => {
               used: count
             }),
             { 
-              status: 429,
+              status: 200,
               headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
             }
           );
@@ -107,7 +107,7 @@ serve(async (req: Request) => {
               used: count
             }),
             { 
-              status: 429,
+              status: 200,
               headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
             }
           );
@@ -126,7 +126,7 @@ serve(async (req: Request) => {
                 message: 'You have run out of credits. Please purchase more to continue.'
               }),
               { 
-                status: 402,
+                status: 200,
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
               }
             );
@@ -152,7 +152,7 @@ serve(async (req: Request) => {
             used: count
           }),
           { 
-            status: 429,
+            status: 200,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
           }
         );
