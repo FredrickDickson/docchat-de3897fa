@@ -1,7 +1,14 @@
 import { useState, useRef, useEffect } from "react";
-import { Upload, FileText, X, Send, Loader2, Sparkles, ArrowLeft } from "lucide-react";
+import { Upload, FileText, X, Send, Loader2, Sparkles, ArrowLeft, Image, FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { 
+  processDocument, 
+  isFileSupported, 
+  getAcceptString,
+  getFileCategory,
+  ProcessedDocument 
+} from "@/lib/documentProcessor";
 
 interface Message {
   id: string;
@@ -20,53 +27,15 @@ const SUGGESTED_QUESTIONS = [
   "Explain this in simple terms",
 ];
 
-// Mock responses for demo
-const MOCK_RESPONSES: Record<string, string> = {
-  default: `Based on my analysis of this document, here are the key points:
-
-**Main Themes:**
-• The document discusses strategic initiatives for Q4 2024
-• Focus areas include digital transformation and operational efficiency
-• Financial projections indicate 23% growth potential
-
-**Key Recommendations:**
-1. Invest in cloud infrastructure for scalability
-2. Develop strategic partnerships with technology providers
-3. Implement data-driven decision-making processes
-
-Would you like me to elaborate on any of these points?`,
-  summary: `Here's a concise summary:
-
-**Executive Summary:**
-This document outlines a comprehensive strategy for organizational growth, emphasizing three core pillars: technology adoption, talent development, and market expansion.
-
-**Critical Numbers:**
-• Projected ROI: 340% over 3 years
-• Implementation timeline: 18 months
-• Required investment: $2.4M
-
-**Bottom Line:**
-The proposed initiatives are well-aligned with market trends and present a strong case for immediate action.`,
-  findings: `The key findings from this document are:
-
-1. **Market Opportunity**: There's a significant gap in the current market that can be addressed through the proposed solution.
-
-2. **Competitive Advantage**: The analysis reveals three unique differentiators compared to existing alternatives.
-
-3. **Risk Assessment**: Moderate risk profile with clear mitigation strategies outlined.
-
-4. **Financial Viability**: Strong unit economics with path to profitability within 24 months.
-
-Shall I dive deeper into any of these findings?`,
-};
-
 const DocumentChat = ({ onBack }: DocumentChatProps) => {
   const [file, setFile] = useState<File | null>(null);
+  const [documentContent, setDocumentContent] = useState<ProcessedDocument | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [processingStatus, setProcessingStatus] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -89,14 +58,10 @@ const DocumentChat = ({ onBack }: DocumentChatProps) => {
   };
 
   const validateFile = (file: File) => {
-    const validTypes = ["application/pdf", "application/vnd.ms-powerpoint", 
-      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-      "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
-    
-    if (!validTypes.includes(file.type) && !file.name.endsWith('.pdf') && !file.name.endsWith('.pptx') && !file.name.endsWith('.docx')) {
+    if (!isFileSupported(file)) {
       toast({
-        title: "Invalid file type",
-        description: "Please upload a PDF, PowerPoint, or Word document",
+        title: "Unsupported file type",
+        description: "Please upload a PDF, Word, PowerPoint, Text, or Image file",
         variant: "destructive",
       });
       return false;
@@ -114,18 +79,42 @@ const DocumentChat = ({ onBack }: DocumentChatProps) => {
 
   const processFile = async (file: File) => {
     setIsProcessing(true);
-    // Simulate processing
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    setIsProcessing(false);
+    setProcessingStatus("Starting...");
     
-    // Add initial assistant message
-    setMessages([
-      {
-        id: "welcome",
-        role: "assistant",
-        content: `I've analyzed **${file.name}**. This appears to be a ${file.name.endsWith('.pdf') ? 'PDF document' : file.name.endsWith('.pptx') ? 'PowerPoint presentation' : 'Word document'} with rich content.\n\nHow can I help you understand this document? You can ask me to summarize it, explain specific sections, or extract key insights.`,
-      },
-    ]);
+    try {
+      const result = await processDocument(file, (status) => {
+        setProcessingStatus(status);
+      });
+      
+      setDocumentContent(result);
+      setIsProcessing(false);
+      
+      const fileCategory = getFileCategory(file);
+      const fileTypeLabel = fileCategory === 'image' ? 'image (OCR processed)' : 
+                           fileCategory === 'pdf' ? 'PDF document' :
+                           fileCategory === 'docx' ? 'Word document' :
+                           fileCategory === 'pptx' ? 'PowerPoint presentation' :
+                           'text file';
+      
+      // Add initial assistant message
+      setMessages([
+        {
+          id: "welcome",
+          role: "assistant",
+          content: `I've analyzed **${file.name}**. This is a ${fileTypeLabel} with ${result.text.length.toLocaleString()} characters of content.\n\n${result.isOCR ? '🔍 Text was extracted using OCR.\n\n' : ''}How can I help you understand this document? You can ask me to summarize it, explain specific sections, or extract key insights.`,
+        },
+      ]);
+      
+    } catch (error: any) {
+      console.error("Processing error:", error);
+      toast({
+        title: "Processing failed",
+        description: error.message || "Failed to process document",
+        variant: "destructive",
+      });
+      setIsProcessing(false);
+      setFile(null);
+    }
   };
 
   const handleDrop = async (e: React.DragEvent) => {
@@ -156,19 +145,104 @@ const DocumentChat = ({ onBack }: DocumentChatProps) => {
 
   const handleRemoveFile = () => {
     setFile(null);
+    setDocumentContent(null);
     setMessages([]);
     setInput("");
+    setProcessingStatus("");
   };
 
-  const getMockResponse = (query: string): string => {
-    const lowerQuery = query.toLowerCase();
-    if (lowerQuery.includes("summary") || lowerQuery.includes("summarize")) {
-      return MOCK_RESPONSES.summary;
+  const chatWithAI = async (question: string): Promise<string> => {
+    if (!documentContent) {
+      throw new Error("No document content available");
     }
-    if (lowerQuery.includes("finding") || lowerQuery.includes("key")) {
-      return MOCK_RESPONSES.findings;
+
+    // Truncate document content if too long (keep first 15000 chars for context)
+    const maxLength = 15000;
+    let docText = documentContent.text;
+    if (docText.length > maxLength) {
+      docText = docText.substring(0, maxLength) + "\n\n[... Document truncated for processing ...]";
     }
-    return MOCK_RESPONSES.default;
+
+    const systemPrompt = `You are a helpful document analysis assistant. Analyze the following document and answer the user's question accurately based on the document's content.
+
+DOCUMENT CONTENT:
+${docText}
+
+IMPORTANT INSTRUCTIONS:
+- Base your answers ONLY on the document content provided above
+- If the answer is not in the document, say so clearly
+- Be concise but comprehensive
+- Use bullet points and formatting when appropriate
+- If asked to summarize, focus on the key points`;
+
+    // Try Puter.js first (free, user-pays model)
+    if (typeof window !== 'undefined' && (window as any).puter?.ai?.chat) {
+      try {
+        const response = await (window as any).puter.ai.chat([
+          { role: "system", content: systemPrompt },
+          { role: "user", content: question }
+        ]);
+        
+        if (typeof response === 'string') {
+          return response;
+        } else if (response?.message?.content) {
+          return response.message.content;
+        } else if (response?.content) {
+          return response.content;
+        }
+        
+        throw new Error("Unexpected response format");
+      } catch (error) {
+        console.error("Puter AI error:", error);
+        throw new Error("AI service temporarily unavailable. Please try again.");
+      }
+    }
+    
+    // Fallback: Provide a basic response based on document analysis
+    return generateFallbackResponse(question, docText);
+  };
+
+  const generateFallbackResponse = (question: string, docText: string): string => {
+    const lowerQuestion = question.toLowerCase();
+    const wordCount = docText.split(/\s+/).length;
+    const charCount = docText.length;
+    
+    // Extract some basic info from the document
+    const sentences = docText.split(/[.!?]+/).filter(s => s.trim().length > 20);
+    const firstFewSentences = sentences.slice(0, 3).join('. ').trim();
+    
+    if (lowerQuestion.includes('summary') || lowerQuestion.includes('summarize')) {
+      return `**Document Summary:**
+
+Based on the uploaded document (${wordCount.toLocaleString()} words):
+
+${firstFewSentences ? `**Overview:** ${firstFewSentences}.` : 'The document contains structured content.'}
+
+**Note:** For more detailed AI analysis, please ensure Puter.js is loaded or sign in to use our full AI features.`;
+    }
+    
+    if (lowerQuestion.includes('key') || lowerQuestion.includes('main') || lowerQuestion.includes('important')) {
+      return `**Key Information:**
+
+The document contains approximately:
+• ${wordCount.toLocaleString()} words
+• ${charCount.toLocaleString()} characters
+• ${sentences.length} sentences
+
+${firstFewSentences ? `**Opening content:** "${firstFewSentences}..."` : ''}
+
+For comprehensive AI-powered analysis, please sign in to access the full chat features.`;
+    }
+    
+    return `I've received your question about the document.
+
+**Document Stats:**
+• Length: ${wordCount.toLocaleString()} words
+• Characters: ${charCount.toLocaleString()}
+
+${firstFewSentences ? `**Document preview:** "${firstFewSentences}..."` : ''}
+
+For full AI-powered document analysis with detailed answers to your questions, please sign in to access our complete features.`;
   };
 
   const handleSend = async (messageText?: string) => {
@@ -185,17 +259,26 @@ const DocumentChat = ({ onBack }: DocumentChatProps) => {
     setInput("");
     setIsLoading(true);
 
-    // Simulate AI response
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      const response = await chatWithAI(text);
+      
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: response,
+      };
 
-    const assistantMessage: Message = {
-      id: (Date.now() + 1).toString(),
-      role: "assistant",
-      content: getMockResponse(text),
-    };
-
-    setMessages((prev) => [...prev, assistantMessage]);
-    setIsLoading(false);
+      setMessages((prev) => [...prev, assistantMessage]);
+    } catch (error: any) {
+      console.error("Chat error:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to get response",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -211,6 +294,14 @@ const DocumentChat = ({ onBack }: DocumentChatProps) => {
     return (bytes / (1024 * 1024)).toFixed(1) + " MB";
   };
 
+  const getFileIcon = () => {
+    if (!file) return <FileText className="w-5 h-5 text-primary" />;
+    const category = getFileCategory(file);
+    if (category === 'image') return <Image className="w-5 h-5 text-primary" />;
+    if (category === 'pptx') return <FileSpreadsheet className="w-5 h-5 text-primary" />;
+    return <FileText className="w-5 h-5 text-primary" />;
+  };
+
   return (
     <section className="min-h-screen pt-20 pb-8 bg-background">
       <div className="container mx-auto px-4 h-[calc(100vh-7rem)]">
@@ -224,7 +315,7 @@ const DocumentChat = ({ onBack }: DocumentChatProps) => {
             {file && (
               <div className="flex items-center gap-3 flex-1">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <FileText className="w-5 h-5 text-primary" />
+                  {getFileIcon()}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{file.name}</p>
@@ -256,7 +347,7 @@ const DocumentChat = ({ onBack }: DocumentChatProps) => {
               >
                 <input
                   type="file"
-                  accept=".pdf,.pptx,.ppt,.doc,.docx"
+                  accept={getAcceptString()}
                   onChange={handleFileInput}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 />
@@ -269,8 +360,15 @@ const DocumentChat = ({ onBack }: DocumentChatProps) => {
                   {isDragging ? "Drop your document here" : "Upload your document"}
                 </p>
                 <p className="text-sm text-muted-foreground mb-4">
-                  PDF, PowerPoint, or Word files up to 100MB
+                  PDF, Word, PowerPoint, Text, or Images (OCR) up to 100MB
                 </p>
+                <div className="flex flex-wrap gap-2 justify-center mb-4">
+                  <span className="px-2 py-1 bg-muted rounded text-xs">PDF</span>
+                  <span className="px-2 py-1 bg-muted rounded text-xs">DOCX</span>
+                  <span className="px-2 py-1 bg-muted rounded text-xs">PPTX</span>
+                  <span className="px-2 py-1 bg-muted rounded text-xs">TXT</span>
+                  <span className="px-2 py-1 bg-muted rounded text-xs">JPG/PNG</span>
+                </div>
                 <Button variant="hero">
                   Choose file
                 </Button>
@@ -284,7 +382,7 @@ const DocumentChat = ({ onBack }: DocumentChatProps) => {
                   <Sparkles className="w-8 h-8 text-primary" />
                 </div>
                 <p className="text-lg font-medium mb-2">Analyzing your document...</p>
-                <p className="text-sm text-muted-foreground">This usually takes a few seconds</p>
+                <p className="text-sm text-muted-foreground">{processingStatus}</p>
               </div>
             </div>
           ) : (
@@ -327,7 +425,7 @@ const DocumentChat = ({ onBack }: DocumentChatProps) => {
                     <div className="bg-card border border-border rounded-2xl px-4 py-3">
                       <div className="flex items-center gap-2">
                         <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                        <span className="text-sm text-muted-foreground">Thinking...</span>
+                        <span className="text-sm text-muted-foreground">Analyzing document...</span>
                       </div>
                     </div>
                   </div>
