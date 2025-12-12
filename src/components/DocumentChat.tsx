@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Upload, FileText, X, Send, Loader2, Sparkles, ArrowLeft, Image, FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   processDocument, 
   isFileSupported, 
@@ -156,93 +157,41 @@ const DocumentChat = ({ onBack }: DocumentChatProps) => {
       throw new Error("No document content available");
     }
 
-    // Truncate document content if too long (keep first 15000 chars for context)
-    const maxLength = 15000;
-    let docText = documentContent.text;
-    if (docText.length > maxLength) {
-      docText = docText.substring(0, maxLength) + "\n\n[... Document truncated for processing ...]";
-    }
+    // Build conversation history for context
+    const conversationHistory = messages
+      .filter(m => m.id !== "welcome")
+      .map(m => ({
+        role: m.role,
+        content: m.content
+      }));
 
-    const systemPrompt = `You are a helpful document analysis assistant. Analyze the following document and answer the user's question accurately based on the document's content.
-
-DOCUMENT CONTENT:
-${docText}
-
-IMPORTANT INSTRUCTIONS:
-- Base your answers ONLY on the document content provided above
-- If the answer is not in the document, say so clearly
-- Be concise but comprehensive
-- Use bullet points and formatting when appropriate
-- If asked to summarize, focus on the key points`;
-
-    // Try Puter.js first (free, user-pays model)
-    if (typeof window !== 'undefined' && (window as any).puter?.ai?.chat) {
-      try {
-        const response = await (window as any).puter.ai.chat([
-          { role: "system", content: systemPrompt },
-          { role: "user", content: question }
-        ]);
-        
-        if (typeof response === 'string') {
-          return response;
-        } else if (response?.message?.content) {
-          return response.message.content;
-        } else if (response?.content) {
-          return response.content;
+    try {
+      const { data, error } = await supabase.functions.invoke('chat-document', {
+        body: {
+          documentContent: documentContent.text,
+          question,
+          conversationHistory
         }
-        
-        throw new Error("Unexpected response format");
-      } catch (error) {
-        console.error("Puter AI error:", error);
-        throw new Error("AI service temporarily unavailable. Please try again.");
+      });
+
+      if (error) {
+        console.error('Edge function error:', error);
+        throw new Error(error.message || 'Failed to get AI response');
       }
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      if (!data?.answer) {
+        throw new Error('No response from AI');
+      }
+
+      return data.answer;
+    } catch (error: any) {
+      console.error('Chat error:', error);
+      throw new Error(error.message || 'AI service temporarily unavailable. Please try again.');
     }
-    
-    // Fallback: Provide a basic response based on document analysis
-    return generateFallbackResponse(question, docText);
-  };
-
-  const generateFallbackResponse = (question: string, docText: string): string => {
-    const lowerQuestion = question.toLowerCase();
-    const wordCount = docText.split(/\s+/).length;
-    const charCount = docText.length;
-    
-    // Extract some basic info from the document
-    const sentences = docText.split(/[.!?]+/).filter(s => s.trim().length > 20);
-    const firstFewSentences = sentences.slice(0, 3).join('. ').trim();
-    
-    if (lowerQuestion.includes('summary') || lowerQuestion.includes('summarize')) {
-      return `**Document Summary:**
-
-Based on the uploaded document (${wordCount.toLocaleString()} words):
-
-${firstFewSentences ? `**Overview:** ${firstFewSentences}.` : 'The document contains structured content.'}
-
-**Note:** For more detailed AI analysis, please ensure Puter.js is loaded or sign in to use our full AI features.`;
-    }
-    
-    if (lowerQuestion.includes('key') || lowerQuestion.includes('main') || lowerQuestion.includes('important')) {
-      return `**Key Information:**
-
-The document contains approximately:
-• ${wordCount.toLocaleString()} words
-• ${charCount.toLocaleString()} characters
-• ${sentences.length} sentences
-
-${firstFewSentences ? `**Opening content:** "${firstFewSentences}..."` : ''}
-
-For comprehensive AI-powered analysis, please sign in to access the full chat features.`;
-    }
-    
-    return `I've received your question about the document.
-
-**Document Stats:**
-• Length: ${wordCount.toLocaleString()} words
-• Characters: ${charCount.toLocaleString()}
-
-${firstFewSentences ? `**Document preview:** "${firstFewSentences}..."` : ''}
-
-For full AI-powered document analysis with detailed answers to your questions, please sign in to access our complete features.`;
   };
 
   const handleSend = async (messageText?: string) => {
