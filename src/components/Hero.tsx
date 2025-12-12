@@ -4,7 +4,11 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from 'react-i18next';
 
-const Hero = () => {
+interface HeroProps {
+  onGetStarted: () => void;
+}
+
+const Hero = ({ onGetStarted }: HeroProps) => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -13,7 +17,7 @@ const Hero = () => {
     if (user) {
       navigate("/dashboard");
     } else {
-      navigate("/auth");
+      onGetStarted();
     }
   };
 
