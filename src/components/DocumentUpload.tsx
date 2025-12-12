@@ -1,13 +1,15 @@
 import { useState } from "react";
-import { Upload, X, Loader2 } from "lucide-react";
+import { Upload, X, Loader2, FileText, Image, FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import * as pdfjsLib from "pdfjs-dist";
-
-// Set the worker source for PDF.js
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+import { 
+  processDocument, 
+  isFileSupported, 
+  getAcceptString,
+  getFileCategory 
+} from "@/lib/documentProcessor";
 
 interface DocumentUploadProps {
   onUploadComplete: () => void;
@@ -23,18 +25,10 @@ const DocumentUpload = ({ onUploadComplete, onCancel }: DocumentUploadProps) => 
   const [uploadStatus, setUploadStatus] = useState<string>("");
 
   const validateFile = (file: File) => {
-    const validTypes = [
-      "application/pdf",
-      "application/vnd.ms-powerpoint",
-      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    ];
-
-    if (!validTypes.includes(file.type) && !file.name.match(/\.(pdf|pptx?|docx?)$/i)) {
+    if (!isFileSupported(file)) {
       toast({
-        title: "Invalid file type",
-        description: "Please upload a PDF, PowerPoint, or Word document",
+        title: "Unsupported file type",
+        description: "Please upload a PDF, Word, PowerPoint, Text, or Image file",
         variant: "destructive",
       });
       return false;
@@ -48,28 +42,6 @@ const DocumentUpload = ({ onUploadComplete, onCancel }: DocumentUploadProps) => 
       return false;
     }
     return true;
-  };
-
-  const extractTextFromPDF = async (file: File): Promise<string> => {
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      let fullText = "";
-
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const textContent = await page.getTextContent();
-        const pageText = textContent.items
-          .map((item: any) => item.str)
-          .join(" ");
-        fullText += pageText + "\n\n";
-      }
-
-      return fullText;
-    } catch (error) {
-      console.error("Error extracting text from PDF:", error);
-      return "";
-    }
   };
 
   const handleDrag = (e: React.DragEvent) => {
@@ -110,12 +82,19 @@ const DocumentUpload = ({ onUploadComplete, onCancel }: DocumentUploadProps) => 
     if (!file || !user) return;
 
     setIsUploading(true);
-    setUploadStatus("Uploading file...");
+    setUploadStatus("Processing document...");
 
     try {
+      // Extract text from document
+      const processedDoc = await processDocument(file, (status) => {
+        setUploadStatus(status);
+      });
+
       const fileExt = file.name.split(".").pop();
       const documentId = crypto.randomUUID();
       const filePath = `${user.id}/${documentId}.${fileExt}`;
+
+      setUploadStatus("Uploading file...");
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage
@@ -131,31 +110,25 @@ const DocumentUpload = ({ onUploadComplete, onCancel }: DocumentUploadProps) => 
         name: file.name,
         file_path: filePath,
         file_size: file.size,
-        file_type: file.type,
+        file_type: file.type || getFileCategory(file),
         status: "processing",
       });
 
       if (dbError) throw dbError;
 
-      // Extract text from PDF
-      if (file.type === "application/pdf" || file.name.endsWith(".pdf")) {
-        setUploadStatus("Extracting text from PDF...");
-        const extractedText = await extractTextFromPDF(file);
+      // Process and store chunks for AI chat
+      if (processedDoc.text) {
+        setUploadStatus("Preparing document for AI chat...");
+        const { error: processError } = await supabase.functions.invoke("process-pdf", {
+          body: {
+            text: processedDoc.text,
+            pdfId: documentId,
+            userId: user.id,
+          },
+        });
 
-        if (extractedText) {
-          setUploadStatus("Processing document for chat...");
-          // Call edge function to process and store chunks
-          const { error: processError } = await supabase.functions.invoke("process-pdf", {
-            body: {
-              text: extractedText,
-              pdfId: documentId,
-              userId: user.id,
-            },
-          });
-
-          if (processError) {
-            console.error("Error processing PDF:", processError);
-          }
+        if (processError) {
+          console.error("Error processing document:", processError);
         }
       }
 
@@ -167,11 +140,14 @@ const DocumentUpload = ({ onUploadComplete, onCancel }: DocumentUploadProps) => 
 
       toast({
         title: "Document uploaded",
-        description: "Your document is ready for chatting",
+        description: processedDoc.isOCR 
+          ? "Text extracted via OCR. Document ready for chatting!"
+          : "Your document is ready for chatting",
       });
 
       onUploadComplete();
     } catch (error: any) {
+      console.error("Upload error:", error);
       toast({
         title: "Upload failed",
         description: error.message,
@@ -187,6 +163,14 @@ const DocumentUpload = ({ onUploadComplete, onCancel }: DocumentUploadProps) => 
     if (bytes < 1024) return bytes + " B";
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
     return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  };
+
+  const getFileIcon = () => {
+    if (!file) return <Upload className="w-5 h-5 text-primary" />;
+    const category = getFileCategory(file);
+    if (category === 'image') return <Image className="w-5 h-5 text-primary" />;
+    if (category === 'pptx') return <FileSpreadsheet className="w-5 h-5 text-primary" />;
+    return <FileText className="w-5 h-5 text-primary" />;
   };
 
   return (
@@ -208,7 +192,7 @@ const DocumentUpload = ({ onUploadComplete, onCancel }: DocumentUploadProps) => 
         >
           <input
             type="file"
-            accept=".pdf,.pptx,.ppt,.doc,.docx"
+            accept={getAcceptString()}
             onChange={handleFileInput}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           />
@@ -220,14 +204,24 @@ const DocumentUpload = ({ onUploadComplete, onCancel }: DocumentUploadProps) => 
           <p className="font-medium mb-1">
             {isDragging ? "Drop your document here" : "Upload your document"}
           </p>
-          <p className="text-sm text-muted-foreground">
-            PDF, PowerPoint, or Word files up to 100MB
+          <p className="text-sm text-muted-foreground mb-3">
+            All major formats supported, up to 100MB
           </p>
+          <div className="flex flex-wrap gap-1.5 justify-center">
+            <span className="px-2 py-0.5 bg-muted rounded text-xs">PDF</span>
+            <span className="px-2 py-0.5 bg-muted rounded text-xs">DOCX</span>
+            <span className="px-2 py-0.5 bg-muted rounded text-xs">PPTX</span>
+            <span className="px-2 py-0.5 bg-muted rounded text-xs">TXT</span>
+            <span className="px-2 py-0.5 bg-muted rounded text-xs">MD</span>
+            <span className="px-2 py-0.5 bg-muted rounded text-xs">CSV</span>
+            <span className="px-2 py-0.5 bg-muted rounded text-xs">HTML</span>
+            <span className="px-2 py-0.5 bg-muted rounded text-xs">JPG/PNG</span>
+          </div>
         </div>
       ) : (
         <div className="flex items-center gap-3 p-4 bg-muted rounded-lg">
           <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Upload className="w-5 h-5 text-primary" />
+            {getFileIcon()}
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-medium truncate">{file.name}</p>

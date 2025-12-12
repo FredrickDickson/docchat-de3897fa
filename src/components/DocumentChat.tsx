@@ -309,13 +309,16 @@ const DocumentChat = ({ onBack }: DocumentChatProps) => {
                   {isDragging ? "Drop your document here" : "Upload your document"}
                 </p>
                 <p className="text-sm text-muted-foreground mb-4">
-                  PDF, Word, PowerPoint, Text, or Images (OCR) up to 100MB
+                  All major formats supported, up to 100MB
                 </p>
                 <div className="flex flex-wrap gap-2 justify-center mb-4">
                   <span className="px-2 py-1 bg-muted rounded text-xs">PDF</span>
                   <span className="px-2 py-1 bg-muted rounded text-xs">DOCX</span>
                   <span className="px-2 py-1 bg-muted rounded text-xs">PPTX</span>
                   <span className="px-2 py-1 bg-muted rounded text-xs">TXT</span>
+                  <span className="px-2 py-1 bg-muted rounded text-xs">MD</span>
+                  <span className="px-2 py-1 bg-muted rounded text-xs">CSV</span>
+                  <span className="px-2 py-1 bg-muted rounded text-xs">HTML</span>
                   <span className="px-2 py-1 bg-muted rounded text-xs">JPG/PNG</span>
                 </div>
                 <Button variant="hero">
