@@ -3,6 +3,8 @@ import { Upload, FileText, X, Send, Loader2, Sparkles, ArrowLeft, Image, FileSpr
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 import { 
   processDocument, 
   isFileSupported, 
@@ -10,6 +12,17 @@ import {
   getFileCategory,
   ProcessedDocument 
 } from "@/lib/documentProcessor";
+
+// Generate or get anonymous ID for rate limiting
+const getAnonymousId = (): string => {
+  const storageKey = 'docchat_anonymous_id';
+  let id = localStorage.getItem(storageKey);
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem(storageKey, id);
+  }
+  return id;
+};
 
 interface Message {
   id: string;
@@ -37,8 +50,11 @@ const DocumentChat = ({ onBack }: DocumentChatProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStatus, setProcessingStatus] = useState("");
+  const [chatCount, setChatCount] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -170,7 +186,8 @@ const DocumentChat = ({ onBack }: DocumentChatProps) => {
         body: {
           documentContent: documentContent.text,
           question,
-          conversationHistory
+          conversationHistory,
+          anonymousId: !user ? getAnonymousId() : undefined
         }
       });
 
@@ -180,6 +197,25 @@ const DocumentChat = ({ onBack }: DocumentChatProps) => {
       }
 
       if (data?.error) {
+        // Handle rate limit errors
+        if (data.error === 'DAILY_LIMIT_REACHED' || data.error === 'MONTHLY_LIMIT_REACHED') {
+          toast({
+            title: "Chat limit reached",
+            description: data.message,
+            variant: "destructive",
+          });
+          navigate('/pricing');
+          throw new Error(data.message);
+        }
+        if (data.error === 'INSUFFICIENT_CREDITS') {
+          toast({
+            title: "Out of credits",
+            description: "Please purchase more credits to continue.",
+            variant: "destructive",
+          });
+          navigate('/pricing');
+          throw new Error(data.message);
+        }
         throw new Error(data.error);
       }
 
@@ -187,6 +223,7 @@ const DocumentChat = ({ onBack }: DocumentChatProps) => {
         throw new Error('No response from AI');
       }
 
+      setChatCount(prev => prev + 1);
       return data.answer;
     } catch (error: any) {
       console.error('Chat error:', error);
