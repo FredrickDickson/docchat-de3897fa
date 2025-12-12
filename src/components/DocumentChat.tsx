@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Upload, FileText, X, Send, Loader2, Sparkles, ArrowLeft, Image, FileSpreadsheet } from "lucide-react";
+import { Upload, FileText, X, Send, Loader2, Sparkles, ArrowLeft, Image, FileSpreadsheet, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,6 +33,10 @@ interface Message {
 interface DocumentChatProps {
   onBack: () => void;
 }
+
+// Rate limits
+const ANONYMOUS_DAILY_LIMIT = 3;
+const FREE_USER_DAILY_LIMIT = 5;
 
 const SUGGESTED_QUESTIONS = [
   "Summarize this document in 3 bullet points",
@@ -312,6 +316,13 @@ const DocumentChat = ({ onBack }: DocumentChatProps) => {
                 </Button>
               </div>
             )}
+            {/* Rate limit indicator for anonymous/free users */}
+            {!user && documentContent && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted rounded-full text-xs">
+                <Info className="w-3 h-3" />
+                <span>{Math.max(0, ANONYMOUS_DAILY_LIMIT - chatCount)}/{ANONYMOUS_DAILY_LIMIT} free chats left</span>
+              </div>
+            )}
           </div>
 
           {!file ? (
@@ -439,24 +450,43 @@ const DocumentChat = ({ onBack }: DocumentChatProps) => {
               )}
 
               {/* Input area */}
-              <div className="border border-border rounded-2xl bg-card p-2 flex items-end gap-2">
-                <textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Ask anything about your document..."
-                  className="flex-1 resize-none bg-transparent px-3 py-2 focus:outline-none min-h-[44px] max-h-32"
-                  rows={1}
-                />
-                <Button
-                  variant="hero"
-                  size="icon"
-                  onClick={() => handleSend()}
-                  disabled={!input.trim() || isLoading}
-                  className="rounded-xl"
-                >
-                  <Send className="w-4 h-4" />
-                </Button>
+              <div className="space-y-2">
+                {/* Signup prompt for anonymous users */}
+                {!user && chatCount >= 1 && (
+                  <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg py-2 px-3">
+                    <Info className="w-3 h-3" />
+                    <span>
+                      {chatCount < ANONYMOUS_DAILY_LIMIT 
+                        ? `${ANONYMOUS_DAILY_LIMIT - chatCount} free messages left today. ` 
+                        : "Daily limit reached. "}
+                      <button 
+                        onClick={() => navigate('/auth')} 
+                        className="text-primary hover:underline font-medium"
+                      >
+                        Sign up for {FREE_USER_DAILY_LIMIT} daily chats
+                      </button>
+                    </span>
+                  </div>
+                )}
+                <div className="border border-border rounded-2xl bg-card p-2 flex items-end gap-2">
+                  <textarea
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Ask anything about your document..."
+                    className="flex-1 resize-none bg-transparent px-3 py-2 focus:outline-none min-h-[44px] max-h-32"
+                    rows={1}
+                  />
+                  <Button
+                    variant="hero"
+                    size="icon"
+                    onClick={() => handleSend()}
+                    disabled={!input.trim() || isLoading}
+                    className="rounded-xl"
+                  >
+                    <Send className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           )}
