@@ -111,12 +111,12 @@ export const useSubscription = (): SubscriptionState => {
     };
   }, [user, refreshSubscription]);
 
-  // Plan-based daily limits
+  // Plan-based daily limits (free registered users get 5 daily chats)
   const PLAN_LIMITS: Record<string, number | null> = {
-    'free': 3,
-    'basic': 10,
-    'pro': null, // Unlimited
-    'elite': null, // Unlimited
+    'free': 5,
+    'basic': null, // Uses credits (500 monthly messages)
+    'pro': null, // Unlimited (uses credits)
+    'elite': null, // Unlimited (uses credits)
   };
 
   const checkLimit = () => {
