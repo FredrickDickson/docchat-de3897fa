@@ -7,9 +7,10 @@ import { CreditsDashboardWidget } from '@/components/dashboard/CreditsDashboardW
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, FileText, MessageSquare, Loader2, Download, Trash2 } from 'lucide-react';
+import { ArrowLeft, FileText, MessageSquare, Loader2, Download, Trash2, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
+import { processDocument, isFileSupported } from '@/lib/documentProcessor';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,10 +41,13 @@ const DocumentDetail = () => {
   const [document, setDocument] = useState<Document | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isReprocessing, setIsReprocessing] = useState(false);
+  const [hasChunks, setHasChunks] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (id) {
       fetchDocument();
+      checkChunks();
     }
   }, [id]);
 
@@ -66,6 +70,91 @@ const DocumentDetail = () => {
       navigate('/dashboard');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const checkChunks = async () => {
+    try {
+      const { count, error } = await supabase
+        .from('pdf_chunks')
+        .select('*', { count: 'exact', head: true })
+        .eq('pdf_id', id);
+
+      if (!error) {
+        setHasChunks((count ?? 0) > 0);
+      }
+    } catch (error) {
+      console.error('Error checking chunks:', error);
+    }
+  };
+
+  const handleReprocess = async () => {
+    if (!document) return;
+
+    setIsReprocessing(true);
+    try {
+      // Download the file from storage
+      const { data: fileData, error: downloadError } = await supabase.storage
+        .from('documents')
+        .download(document.file_path);
+
+      if (downloadError) throw downloadError;
+
+      // Convert to File object
+      const file = new File([fileData], document.name, { type: document.file_type });
+
+      // Process the document to extract text
+      toast({
+        title: 'Processing document...',
+        description: 'Extracting text from your document',
+      });
+
+      const processedDoc = await processDocument(file);
+
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Delete old chunks if any
+      await supabase
+        .from('pdf_chunks')
+        .delete()
+        .eq('pdf_id', document.id);
+
+      // Call edge function to process and store new chunks
+      const { error: processError } = await supabase.functions.invoke("process-pdf", {
+        body: {
+          text: processedDoc.text,
+          pdfId: document.id,
+          userId: user.id,
+        },
+      });
+
+      if (processError) throw processError;
+
+      // Update document status
+      await supabase
+        .from('documents')
+        .update({ status: 'ready' })
+        .eq('id', document.id);
+
+      toast({
+        title: 'Success!',
+        description: 'Document reprocessed. You can now chat with it.',
+      });
+
+      // Refresh chunks status
+      setHasChunks(true);
+      
+    } catch (error: any) {
+      console.error('Reprocess error:', error);
+      toast({
+        title: 'Reprocessing failed',
+        description: error.message || 'Failed to reprocess document',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsReprocessing(false);
     }
   };
 
@@ -254,10 +343,36 @@ const DocumentDetail = () => {
 
               <TabsContent value="chat" className="mt-4 sm:mt-6">
                 {document.status === 'completed' || document.status === 'ready' ? (
-                  <DocumentChatInterface
-                    documentId={document.id}
-                    documentName={document.name}
-                  />
+                  hasChunks === false ? (
+                    <Card>
+                      <CardContent className="py-8 sm:py-12 text-center">
+                        <RefreshCw className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-4 text-muted-foreground" />
+                        <h3 className="text-base sm:text-lg font-medium mb-2">Document Needs Processing</h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          This document was uploaded before text extraction was enabled for its file type.
+                          Click below to process it now.
+                        </p>
+                        <Button onClick={handleReprocess} disabled={isReprocessing}>
+                          {isReprocessing ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Processing...
+                            </>
+                          ) : (
+                            <>
+                              <RefreshCw className="w-4 h-4 mr-2" />
+                              Process Document
+                            </>
+                          )}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <DocumentChatInterface
+                      documentId={document.id}
+                      documentName={document.name}
+                    />
+                  )
                 ) : (
                   <Card>
                     <CardContent className="py-8 sm:py-12 text-center">
