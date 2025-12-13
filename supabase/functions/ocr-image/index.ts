@@ -12,10 +12,14 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { imageData, userId, fileName } = await req.json();
+    const { imageData, userId, fileName, anonId } = await req.json();
 
-    if (!imageData || !userId) {
-      throw new Error('imageData and userId are required');
+    if (!imageData) {
+      throw new Error('imageData is required');
+    }
+    
+    if (!userId && !anonId) {
+        throw new Error('userId or anonId is required');
     }
 
     const supabase = createClient(
@@ -23,20 +27,108 @@ serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    // Deduct 2 credits for OCR
-    const { error: creditError } = await supabase.rpc('deduct_credits', {
-      p_user_id: userId,
-      p_cost: 2
-    });
-
-    if (creditError) {
-      if (creditError.message === 'INSUFFICIENT_CREDITS') {
-        return new Response(
-          JSON.stringify({ error: 'INSUFFICIENT_CREDITS', required: 2 }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      throw creditError;
+    // Rate Limiting Logic
+    if (userId) {
+        // Check if user is paid or free
+        const { data: userData } = await supabase
+            .from('users')
+            .select('plan')
+            .eq('id', userId)
+            .single();
+        
+        const plan = userData?.plan || 'free';
+        
+        if (plan === 'free') {
+            const DAILY_LIMIT = 5;
+            const today = new Date().toISOString().split('T')[0];
+            
+            const { data: usage } = await supabase
+                .from('user_usage')
+                .select('*')
+                .eq('user_id', userId)
+                .single();
+            
+            let currentCount = 0;
+            
+            if (usage && usage.last_reset === today) {
+                currentCount = usage.ocr_count;
+            } else {
+                // Reset or create
+                await supabase.from('user_usage').upsert({
+                    user_id: userId,
+                    ocr_count: 0,
+                    last_reset: today
+                });
+            }
+            
+            if (currentCount >= DAILY_LIMIT) {
+                 return new Response(
+                    JSON.stringify({ error: 'Daily free OCR limit reached. Upgrade to continue.', status: 429 }),
+                    { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+                  );
+            }
+            
+            // Increment usage
+            await supabase.from('user_usage').upsert({
+                user_id: userId,
+                ocr_count: currentCount + 1,
+                last_reset: today
+            });
+            
+        } else {
+            // Paid user - Deduct credits
+            // Deduct 2 credits for OCR
+            const { error: creditError } = await supabase.rpc('deduct_credits', {
+              p_user_id: userId,
+              p_cost: 2
+            });
+        
+            if (creditError) {
+              if (creditError.message === 'INSUFFICIENT_CREDITS') {
+                return new Response(
+                  JSON.stringify({ error: 'INSUFFICIENT_CREDITS', required: 2 }),
+                  { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+                );
+              }
+              throw creditError;
+            }
+        }
+    } else if (anonId) {
+        // Anonymous User
+        const DAILY_LIMIT = 3;
+        const today = new Date().toISOString().split('T')[0];
+        
+        const { data: usage } = await supabase
+            .from('anonymous_usage')
+            .select('*')
+            .eq('anon_id', anonId)
+            .single();
+            
+        let currentCount = 0;
+        
+        if (usage && usage.last_reset === today) {
+            currentCount = usage.ocr_count;
+        } else {
+             await supabase.from('anonymous_usage').upsert({
+                anon_id: anonId,
+                ocr_count: 0,
+                last_reset: today
+            });
+        }
+        
+        if (currentCount >= DAILY_LIMIT) {
+             return new Response(
+                JSON.stringify({ error: 'Daily free OCR limit reached. Please sign up to continue.', status: 429 }),
+                { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+              );
+        }
+        
+        // Increment usage
+        await supabase.from('anonymous_usage').upsert({
+            anon_id: anonId,
+            ocr_count: currentCount + 1,
+            last_reset: today
+        });
     }
 
     // Use Google Cloud Vision API for OCR
@@ -44,21 +136,22 @@ serve(async (req: Request) => {
     
     if (!visionApiKey) {
       // Fallback: Return a message that OCR is not configured
-      // In production, you would use Tesseract.js or another OCR service
       console.warn('GOOGLE_VISION_API_KEY not configured, using placeholder');
       
-      // Track analytics
-      await supabase.from('user_analytics').insert({
-        user_id: userId,
-        event_type: 'ocr',
-        credits_used: 2,
-        metadata: { file_name: fileName || 'unknown', success: false }
-      });
+      // Track analytics only for registered users
+      if (userId) {
+          await supabase.from('user_analytics').insert({
+            user_id: userId,
+            event_type: 'ocr',
+            credits_used: 2,
+            metadata: { file_name: fileName || 'unknown', success: false }
+          });
+      }
 
       return new Response(
         JSON.stringify({ 
           text: 'OCR service not configured. Please add GOOGLE_VISION_API_KEY to enable OCR.',
-          creditsUsed: 2,
+          creditsUsed: userId ? 2 : 0,
           warning: 'OCR_NOT_CONFIGURED'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -91,22 +184,24 @@ serve(async (req: Request) => {
       throw new Error('No text found in image');
     }
 
-    // Track analytics
-    await supabase.from('user_analytics').insert({
-      user_id: userId,
-      event_type: 'ocr',
-      credits_used: 2,
-      metadata: { 
-        file_name: fileName || 'unknown',
-        text_length: extractedText.length,
-        success: true 
-      }
-    });
+    // Track analytics only for registered users
+    if (userId) {
+        await supabase.from('user_analytics').insert({
+          user_id: userId,
+          event_type: 'ocr',
+          credits_used: 2,
+          metadata: { 
+            file_name: fileName || 'unknown',
+            text_length: extractedText.length,
+            success: true 
+          }
+        });
+    }
 
     return new Response(
       JSON.stringify({ 
         text: extractedText,
-        creditsUsed: 2,
+        creditsUsed: userId ? 2 : 0,
         characterCount: extractedText.length
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -4,26 +4,34 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
+import { getAnonId } from '@/utils/anon';
 
 /**
  * Chat with document using LangChain via edge function
  * @param documentId - The document ID
  * @param question - User's question
- * @param userId - User ID
+ * @param userId - User ID (optional, will use anonymous ID if not provided)
  * @returns AI response
  */
 export const chatWithDocument = async (
   documentId: string,
   question: string,
-  userId: string
+  userId?: string
 ): Promise<string> => {
   try {
+    const body: any = {
+      documentId,
+      question
+    };
+
+    if (userId) {
+      body.userId = userId;
+    } else {
+      body.anonId = getAnonId();
+    }
+
     const { data, error } = await supabase.functions.invoke('query-document', {
-      body: {
-        documentId,
-        question,
-        userId
-      }
+      body
     });
 
     if (error) {
@@ -50,4 +58,3 @@ export const chatWithDocument = async (
 export const isPuterAILoaded = (): boolean => {
   return true; // Always available via edge function
 };
-

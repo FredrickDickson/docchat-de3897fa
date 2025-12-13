@@ -4,6 +4,7 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
+import { getAnonId } from '@/utils/anon';
 
 // Extend Window interface for Puter.js
 declare global {
@@ -29,16 +30,19 @@ export const extractTextFromImage = async (
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
-    if (!user) {
-      throw new Error('User must be authenticated to use OCR');
+    const body: any = {
+      imageData: imageDataURL,
+      fileName: fileName || 'image'
+    };
+
+    if (user) {
+      body.userId = user.id;
+    } else {
+      body.anonId = getAnonId();
     }
 
     const { data, error } = await supabase.functions.invoke('ocr-image', {
-      body: {
-        imageData: imageDataURL,
-        userId: user.id,
-        fileName: fileName || 'image'
-      }
+      body
     });
 
     if (error) {

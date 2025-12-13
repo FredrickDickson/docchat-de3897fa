@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { useSubscription } from "@/hooks/useSubscription";
+import { getAnonId } from "@/utils/anon";
 
 interface Message {
   id: string;
@@ -18,7 +19,7 @@ interface Message {
 
 interface ChatInterfaceProps {
   pdfId: string;
-  userId: string;
+  userId?: string;
 }
 
 const FREE_DAILY_CHAT_LIMIT = 5;
@@ -36,9 +37,14 @@ export const ChatInterface = ({ pdfId, userId }: ChatInterfaceProps) => {
   // Fetch existing chat history from Supabase
   useEffect(() => {
     const fetchChatHistory = async () => {
-      if (!pdfId || !userId) {
+      if (!pdfId) {
         setIsLoadingHistory(false);
         return;
+      }
+
+      if (!userId) {
+          setIsLoadingHistory(false);
+          return;
       }
 
       try {
@@ -69,39 +75,41 @@ export const ChatInterface = ({ pdfId, userId }: ChatInterfaceProps) => {
 
     fetchChatHistory();
 
-    // Subscribe to new messages for real-time updates
-    const channel = supabase
-      .channel(`chat-${pdfId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'chat_messages',
-          filter: `pdf_id=eq.${pdfId}`
-        },
-        (payload) => {
-          const newMsg = payload.new as any;
-          // Only add if it belongs to this user
-          if (newMsg.user_id === userId) {
-            setMessages(prev => {
-              // Check if message already exists
-              if (prev.some(m => m.id === newMsg.id)) return prev;
-              return [...prev, {
-                id: newMsg.id,
-                sender: newMsg.sender as 'user' | 'ai',
-                message: newMsg.message,
-                created_at: newMsg.created_at
-              }];
-            });
-          }
-        }
-      )
-      .subscribe();
+    // Subscribe to new messages for real-time updates (only for logged in users)
+    if (userId) {
+        const channel = supabase
+          .channel(`chat-${pdfId}`)
+          .on(
+            'postgres_changes',
+            {
+              event: 'INSERT',
+              schema: 'public',
+              table: 'chat_messages',
+              filter: `pdf_id=eq.${pdfId}`
+            },
+            (payload) => {
+              const newMsg = payload.new as any;
+              // Only add if it belongs to this user
+              if (newMsg.user_id === userId) {
+                setMessages(prev => {
+                  // Check if message already exists
+                  if (prev.some(m => m.id === newMsg.id)) return prev;
+                  return [...prev, {
+                    id: newMsg.id,
+                    sender: newMsg.sender as 'user' | 'ai',
+                    message: newMsg.message,
+                    created_at: newMsg.created_at
+                  }];
+                });
+              }
+            }
+          )
+          .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+        return () => {
+          supabase.removeChannel(channel);
+        };
+    }
   }, [pdfId, userId]);
 
   useEffect(() => {
@@ -114,7 +122,7 @@ export const ChatInterface = ({ pdfId, userId }: ChatInterfaceProps) => {
     if (!input.trim() || isLoading) return;
 
     // Check if free user has exceeded daily limit
-    if (plan === 'free' && dailyUsage >= FREE_DAILY_CHAT_LIMIT) {
+    if (userId && plan === 'free' && dailyUsage >= FREE_DAILY_CHAT_LIMIT) {
       toast({
         title: 'Daily limit reached',
         description: 'You have used all your free daily chats. Upgrade to continue.',
@@ -136,12 +144,15 @@ export const ChatInterface = ({ pdfId, userId }: ChatInterfaceProps) => {
     setMessages(prev => [...prev, { id: tempAiMsgId, sender: 'ai', message: '' }]);
 
     try {
+      const anonId = !userId ? getAnonId() : undefined;
+      
       // Call the edge function which stores messages and uses DeepSeek
       const { data, error } = await supabase.functions.invoke('query-document', {
         body: {
           documentId: pdfId,
           question: userMessage,
-          userId: userId
+          userId: userId,
+          anonId: anonId
         }
       });
 
@@ -161,7 +172,9 @@ export const ChatInterface = ({ pdfId, userId }: ChatInterfaceProps) => {
       );
       
       // Increment daily usage after successful message
-      await incrementUsage();
+      if (userId) {
+          await incrementUsage();
+      }
     } catch (error: any) {
       console.error('Chat error:', error);
       // Remove temp messages on error
@@ -175,6 +188,17 @@ export const ChatInterface = ({ pdfId, userId }: ChatInterfaceProps) => {
           variant: "destructive",
         });
         navigate('/pricing');
+      } else if (error.message?.includes('Daily free chats used') || error.message?.includes('Daily free chats exhausted')) {
+          toast({
+            title: "Daily limit reached",
+            description: error.message,
+            variant: "destructive",
+          });
+          if (!userId) {
+              // Maybe prompt to sign up?
+          } else {
+              navigate('/pricing');
+          }
       } else {
         toast({
           title: "Error",
@@ -187,7 +211,7 @@ export const ChatInterface = ({ pdfId, userId }: ChatInterfaceProps) => {
     }
   };
 
-  if (isLoadingHistory) {
+  if (isLoadingHistory && userId) {
     return (
       <div className="flex flex-col h-[600px] border rounded-lg bg-background items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary mb-2" />
@@ -200,7 +224,9 @@ export const ChatInterface = ({ pdfId, userId }: ChatInterfaceProps) => {
     <div className="flex flex-col h-[600px] border rounded-lg bg-background">
       <div className="px-4 py-2 border-b flex items-center justify-between">
         <span className="text-sm font-medium">Chat with Document</span>
-        <Badge variant="outline" className="text-xs">1 credit per message</Badge>
+        <Badge variant="outline" className="text-xs">
+            {userId ? '1 credit per message' : 'Free anonymous chat'}
+        </Badge>
       </div>
       <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
         <div className="space-y-4">
@@ -208,7 +234,9 @@ export const ChatInterface = ({ pdfId, userId }: ChatInterfaceProps) => {
             <div className="text-center py-8 text-muted-foreground">
               <Bot className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>Ask a question about this document to get started.</p>
-              <p className="text-xs mt-2">Chat history is automatically saved.</p>
+              <p className="text-xs mt-2">
+                  {userId ? 'Chat history is automatically saved.' : 'Chat history is not saved for anonymous users.'}
+              </p>
             </div>
           )}
           {messages.map((msg) => (

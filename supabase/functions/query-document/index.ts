@@ -12,10 +12,14 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { documentId, question, userId } = await req.json();
+    const { documentId, question, userId, anonId } = await req.json();
 
-    if (!documentId || !question || !userId) {
-      throw new Error('documentId, question, and userId are required');
+    if (!documentId || !question) {
+      throw new Error('documentId and question are required');
+    }
+    
+    if (!userId && !anonId) {
+        throw new Error('userId or anonId is required');
     }
 
     const supabase = createClient(
@@ -23,31 +27,117 @@ serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    // Check and deduct credits FIRST before making API call
-    console.log('Checking and deducting credits...');
-    const { data: creditData, error: creditError } = await supabase.rpc('deduct_credits', {
-      p_user_id: userId,
-      p_cost: 1
-    });
-
-    if (creditError) {
-      console.log('Credit error:', creditError);
-      if (creditError.message === 'INSUFFICIENT_CREDITS' || creditError.message?.includes('insufficient')) {
-        return new Response(
-          JSON.stringify({ error: 'INSUFFICIENT_CREDITS', required: 1 }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      throw creditError;
+    // Rate Limiting Logic
+    if (userId) {
+        // Check if user is paid or free
+        const { data: userData } = await supabase
+            .from('users')
+            .select('plan')
+            .eq('id', userId)
+            .single();
+        
+        const plan = userData?.plan || 'free';
+        
+        if (plan === 'free') {
+            const DAILY_LIMIT = 5;
+            const today = new Date().toISOString().split('T')[0];
+            
+            const { data: usage } = await supabase
+                .from('user_usage')
+                .select('*')
+                .eq('user_id', userId)
+                .single();
+            
+            let currentCount = 0;
+            
+            if (usage && usage.last_reset === today) {
+                currentCount = usage.chat_count;
+            } else {
+                // Reset or create
+                await supabase.from('user_usage').upsert({
+                    user_id: userId,
+                    chat_count: 0,
+                    last_reset: today
+                });
+            }
+            
+            if (currentCount >= DAILY_LIMIT) {
+                 return new Response(
+                    JSON.stringify({ error: 'Daily free chats used. Upgrade to continue.', status: 429 }),
+                    { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+                  );
+            }
+            
+            // Increment usage
+            await supabase.from('user_usage').upsert({
+                user_id: userId,
+                chat_count: currentCount + 1,
+                last_reset: today
+            });
+            
+        } else {
+            // Paid user - Deduct credits
+             console.log('Checking and deducting credits...');
+            const { error: creditError } = await supabase.rpc('deduct_credits', {
+              p_user_id: userId,
+              p_cost: 1
+            });
+        
+            if (creditError) {
+              console.log('Credit error:', creditError);
+              if (creditError.message === 'INSUFFICIENT_CREDITS' || creditError.message?.includes('insufficient')) {
+                return new Response(
+                  JSON.stringify({ error: 'INSUFFICIENT_CREDITS', required: 1 }),
+                  { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+                );
+              }
+              throw creditError;
+            }
+            console.log('Credits deducted successfully');
+        }
+    } else if (anonId) {
+        // Anonymous User
+        const DAILY_LIMIT = 3;
+        const today = new Date().toISOString().split('T')[0];
+        
+        const { data: usage } = await supabase
+            .from('anonymous_usage')
+            .select('*')
+            .eq('anon_id', anonId)
+            .single();
+            
+        let currentCount = 0;
+        
+        if (usage && usage.last_reset === today) {
+            currentCount = usage.chat_count;
+        } else {
+             await supabase.from('anonymous_usage').upsert({
+                anon_id: anonId,
+                chat_count: 0,
+                last_reset: today
+            });
+        }
+        
+        if (currentCount >= DAILY_LIMIT) {
+             return new Response(
+                JSON.stringify({ error: 'Daily free chats exhausted. Please sign up to continue.', status: 429 }),
+                { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+              );
+        }
+        
+        // Increment usage
+        await supabase.from('anonymous_usage').upsert({
+            anon_id: anonId,
+            chat_count: currentCount + 1,
+            last_reset: today
+        });
     }
-    console.log('Credits deducted successfully');
 
     // Get all chunks for the document
     const { data: chunks, error: chunksError } = await supabase
       .from('pdf_chunks')
       .select('chunk_text')
       .eq('pdf_id', documentId)
-      .eq('user_id', userId)
       .order('page_number');
 
     if (chunksError || !chunks || chunks.length === 0) {
@@ -58,7 +148,7 @@ serve(async (req: Request) => {
     const maxChunks = 10;
     const context = chunks
       .slice(0, maxChunks)
-      .map(c => c.chunk_text)
+      .map((c: { chunk_text: string }) => c.chunk_text)
       .join('\n\n');
 
     // Query DeepSeek with context
@@ -100,34 +190,37 @@ serve(async (req: Request) => {
     const answer = data.choices[0].message.content;
     console.log('DeepSeek response received');
 
-    // Store user message
-    await supabase.from('chat_messages').insert({
-      user_id: userId,
-      pdf_id: documentId,
-      sender: 'user',
-      message: question
-    });
+    // Store messages and analytics ONLY for registered users
+    if (userId) {
+        // Store user message
+        await supabase.from('chat_messages').insert({
+          user_id: userId,
+          pdf_id: documentId,
+          sender: 'user',
+          message: question
+        });
 
-    // Store AI message
-    await supabase.from('chat_messages').insert({
-      user_id: userId,
-      pdf_id: documentId,
-      sender: 'ai',
-      message: answer
-    });
+        // Store AI message
+        await supabase.from('chat_messages').insert({
+          user_id: userId,
+          pdf_id: documentId,
+          sender: 'ai',
+          message: answer
+        });
 
-    // Track analytics
-    await supabase.from('user_analytics').insert({
-      user_id: userId,
-      event_type: 'chat',
-      credits_used: 1,
-      metadata: { document_id: documentId, question_length: question.length }
-    });
+        // Track analytics
+        await supabase.from('user_analytics').insert({
+          user_id: userId,
+          event_type: 'chat',
+          credits_used: 1,
+          metadata: { document_id: documentId, question_length: question.length }
+        });
+    }
 
     return new Response(
       JSON.stringify({ 
         answer,
-        creditsUsed: 1
+        creditsUsed: userId ? 1 : 0
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
