@@ -24,6 +24,13 @@ interface ChatInterfaceProps {
 
 const FREE_DAILY_CHAT_LIMIT = 5;
 
+const SUGGESTION_CHIPS = [
+  "Summarize this document in 3 bullet points",
+  "What are the key findings?",
+  "What are the main recommendations?",
+  "Explain this in simple terms"
+];
+
 export const ChatInterface = ({ pdfId, userId }: ChatInterfaceProps) => {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -118,8 +125,14 @@ export const ChatInterface = ({ pdfId, userId }: ChatInterfaceProps) => {
     }
   }, [messages]);
 
-  const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+  const handleSuggestionClick = (suggestion: string) => {
+    setInput(suggestion);
+    handleSend(suggestion);
+  };
+
+  const handleSend = async (messageOverride?: string) => {
+    const messageToSend = messageOverride || input;
+    if (!messageToSend.trim() || isLoading) return;
 
     // Check if free user has exceeded daily limit
     if (userId && plan === 'free' && dailyUsage >= FREE_DAILY_CHAT_LIMIT) {
@@ -132,15 +145,14 @@ export const ChatInterface = ({ pdfId, userId }: ChatInterfaceProps) => {
       return;
     }
 
-    const userMessage = input;
-    setInput("");
+    if (!messageOverride) setInput("");
     setIsLoading(true);
 
     // Optimistically add user message with temp ID
     const tempUserMsgId = `temp-user-${Date.now()}`;
     const tempAiMsgId = `temp-ai-${Date.now()}`;
     
-    setMessages(prev => [...prev, { id: tempUserMsgId, sender: 'user', message: userMessage }]);
+    setMessages(prev => [...prev, { id: tempUserMsgId, sender: 'user', message: messageToSend }]);
     setMessages(prev => [...prev, { id: tempAiMsgId, sender: 'ai', message: '' }]);
 
     try {
@@ -150,7 +162,7 @@ export const ChatInterface = ({ pdfId, userId }: ChatInterfaceProps) => {
       const { data, error } = await supabase.functions.invoke('query-document', {
         body: {
           documentId: pdfId,
-          question: userMessage,
+          question: messageToSend,
           userId: userId,
           anonId: anonId
         }
@@ -268,6 +280,23 @@ export const ChatInterface = ({ pdfId, userId }: ChatInterfaceProps) => {
           ))}
         </div>
       </ScrollArea>
+      
+      {/* Suggestion Chips */}
+      {messages.length === 0 && (
+        <div className="px-4 pb-2 flex flex-wrap gap-2">
+          {SUGGESTION_CHIPS.map((chip, index) => (
+            <button
+              key={index}
+              onClick={() => handleSuggestionClick(chip)}
+              className="text-xs bg-muted hover:bg-muted/80 text-foreground px-3 py-1.5 rounded-full transition-colors border border-border"
+              disabled={isLoading}
+            >
+              {chip}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="p-4 border-t flex gap-2">
         <Input
           value={input}
@@ -276,7 +305,7 @@ export const ChatInterface = ({ pdfId, userId }: ChatInterfaceProps) => {
           placeholder="Ask a question about this PDF..."
           disabled={isLoading}
         />
-        <Button onClick={handleSend} disabled={isLoading || !input.trim()}>
+        <Button onClick={() => handleSend()} disabled={isLoading || !input.trim()}>
           {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
         </Button>
       </div>

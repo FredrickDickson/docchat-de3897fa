@@ -17,7 +17,7 @@ const Hero = ({ onGetStarted }: HeroProps) => {
     if (user) {
       navigate("/dashboard");
     } else {
-      onGetStarted();
+      navigate("/auth");
     }
   };
 
