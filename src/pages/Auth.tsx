@@ -8,7 +8,19 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-// import { Separator } from "@/components/ui/separator"; // Google sign-in removed
+import { Separator } from "@/components/ui/separator"; // Uncommented for the "Or continue with" divider
+
+// Assuming you have a function to handle Google sign-in
+// If not, you can implement it as shown below
+const signInWithGoogle = async () => {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${window.location.origin}/dashboard`,
+    },
+  });
+  if (error) throw error;
+};
 
 const Auth = () => {
   const { t } = useTranslation();
@@ -19,7 +31,7 @@ const Auth = () => {
   const [name, setName] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth(); // removed Google
+  const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -81,22 +93,22 @@ const Auth = () => {
     }
   };
 
-  // Google Sign-in FULLY REMOVED
-  //
-  // const handleGoogleSignIn = async () => {
-  //   setIsLoading(true);
-  //   try {
-  //     await signInWithGoogle();
-  //   } catch (error: any) {
-  //     toast({
-  //       title: "Error",
-  //       description: error.message || "Failed to sign in with Google",
-  //       variant: "destructive",
-  //     });
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
+  // Google Sign-in handler (restored)
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    try {
+      await signInWithGoogle();
+      // Note: Supabase OAuth will automatically redirect after successful sign-in
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to sign in with Google",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (authLoading) {
     return (
@@ -226,9 +238,8 @@ const Auth = () => {
             </Button>
           </form>
 
-          {/* Google Sign-in Button Removed */}
-          
-          <div className="relative">
+          {/* Restored Google Sign-in Button */}
+          <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
               <Separator />
             </div>
@@ -245,10 +256,26 @@ const Auth = () => {
             onClick={handleGoogleSignIn}
             disabled={isLoading}
           >
-            <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24"> … </svg>
+            <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+              <path
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.51h5.84c-.25 1.31-.98 2.42-2.07 3.16v2.63h3.35c1.96-1.81 3.1-4.47 3.1-7.99z"
+                fill="#4285F4"
+              />
+              <path
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.35-2.63c-.98.66-2.23 1.06-3.93 1.06-3.02 0-5.58-2.04-6.49-4.78H.96v2.67C2.77 20.39 7.01 23 12 23z"
+                fill="#34A853"
+              />
+              <path
+                d="M5.51 14.22c-.23-.66-.36-1.37-.36-2.22s.13-1.56.36-2.22V7.15H.96C.35 8.57 0 10.22 0 12s.35 3.43.96 4.85l4.55-2.63z"
+                fill="#FBBC05"
+              />
+              <path
+                d="M12 4.98c1.66 0 3.14.57 4.31 1.69l3.23-3.23C17.46 1.98 14.97 1 12 1 7.01 1 2.77 3.61.96 7.15l4.55 2.63C6.42 7.02 8.98 4.98 12 4.98z"
+                fill="#EA4335"
+              />
+            </svg>
             Continue with Google
           </Button>
-          
 
           <p className="text-center text-sm text-muted-foreground">
             {isLogin ? t('auth.no_account') : t('auth.have_account')}{" "}
