@@ -10,17 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Separator } from "@/components/ui/separator"; // Uncommented for the "Or continue with" divider
 
-// Assuming you have a function to handle Google sign-in
-// If not, you can implement it as shown below
-const signInWithGoogle = async () => {
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: `${window.location.origin}/dashboard`,
-    },
-  });
-  if (error) throw error;
-};
+
 
 const Auth = () => {
   const { t } = useTranslation();
@@ -31,7 +21,7 @@ const Auth = () => {
   const [name, setName] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, signInWithGoogle } = useAuth();
 
   useEffect(() => {
     if (!authLoading && user) {
