@@ -227,7 +227,7 @@ const Auth = () => {
           </form>
 
           {/* Google Sign-in Button Removed */}
-          {/* 
+          
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <Separator />
@@ -248,7 +248,7 @@ const Auth = () => {
             <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24"> … </svg>
             Continue with Google
           </Button>
-          */}
+          
 
           <p className="text-center text-sm text-muted-foreground">
             {isLogin ? t('auth.no_account') : t('auth.have_account')}{" "}
